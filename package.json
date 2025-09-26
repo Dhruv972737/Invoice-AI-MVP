@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "node server.js",
+    "build:vercel": "vite build",
     "postbuild": "echo 'Build completed successfully'"
   },
   "dependencies": {

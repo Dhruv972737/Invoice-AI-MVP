@@ -50,7 +50,11 @@ console.log('🔧 Setting up middleware...');
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL || 'https://invoice-ai-mvp-production.up.railway.app'] 
+    ? [
+        process.env.FRONTEND_URL || 'https://invoice-ai-mvp-production.up.railway.app',
+        'https://invoice-ai-frontend.vercel.app',
+        'https://invoice-ai-frontend-*.vercel.app'
+      ]
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
@@ -65,47 +69,8 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files from dist directory
-if (process.env.NODE_ENV === 'production') {
-  console.log('Production mode: serving static files from dist directory');
-  const distPath = path.join(__dirname, 'dist');
-  const indexPath = path.join(distPath, 'index.html');
-  console.log('📁 Dist directory path:', distPath);
-  console.log('📁 Dist directory exists:', fs.existsSync(distPath));
-  console.log('📄 Index.html exists:', fs.existsSync(indexPath));
-  
-  // Check if build files exist
-  if (!fs.existsSync(distPath)) {
-    console.error('❌ CRITICAL: dist directory not found! Frontend build may have failed.');
-    console.error('📁 Current directory contents:', fs.readdirSync(__dirname));
-  }
-  
-  if (!fs.existsSync(indexPath)) {
-    console.error('❌ CRITICAL: index.html not found! Frontend build incomplete.');
-    if (fs.existsSync(distPath)) {
-      console.error('📁 Dist directory contents:', fs.readdirSync(distPath));
-    }
-  }
-  
-  // Serve static files with proper headers
-  app.use(express.static(distPath, {
-    maxAge: '1h',
-    etag: true,
-    lastModified: true,
-    index: false, // Don't serve index.html automatically
-    setHeaders: (res, filePath) => {
-      if (filePath.endsWith('.html')) {
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-      } else if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
-        res.setHeader('Cache-Control', 'public, max-age=3600');
-      }
-    }
-  }));
-} else {
-  console.log('🔧 Development mode: not serving static files');
-}
+// Backend-only mode - no static file serving
+console.log('🔧 Backend-only mode: Frontend will be served by Vercel');
 
 // Swagger configuration
 console.log('📚 Setting up API documentation...');
@@ -581,79 +546,21 @@ app.get('/api/user/profile', authenticateUser, async (req, res) => {
   }
 });
 
-// Serve React app for all other routes in production
-if (process.env.NODE_ENV === 'production') {
-  console.log('🌐 Setting up React app serving for production...');
-  app.get('*', (req, res) => {
-    // Skip API routes
-    if (req.path.startsWith('/api/')) {
-      return res.status(404).json({ error: 'API endpoint not found' });
-    }
-    
-    // Skip assets that should be served by static middleware
-    if (req.path.match(/\.(ico|png|jpg|jpeg|gif|svg|css|js|woff|woff2|ttf|eot|map)$/)) {
-      return res.status(404).send('Static asset not found');
-    }
-    
-    const indexPath = path.join(__dirname, 'dist', 'index.html');
-    console.log(`📄 Serving SPA route: ${req.path}`);
-    
-    if (fs.existsSync(indexPath)) {
-      try {
-        const htmlContent = fs.readFileSync(indexPath, 'utf8');
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-        res.send(htmlContent);
-      } catch (err) {
-        console.error(`❌ Error reading index.html for ${req.path}:`, err);
-        res.status(500).send(`
-          <!DOCTYPE html>
-          <html>
-            <head><title>Application Error</title></head>
-            <body>
-              <h1>Application Error</h1>
-              <p>Failed to load the application. Please try refreshing the page.</p>
-              <p>Error: ${err.message}</p>
-            </body>
-          </html>
-        `);
-      }
-    } else {
-      console.error(`❌ index.html not found at:`, indexPath);
-      res.status(404).send(`
-        <!DOCTYPE html>
-        <html>
-          <head><title>Build Error</title></head>
-          <body>
-            <h1>Build Error</h1>
-            <p>Frontend files not found. The build may have failed.</p>
-            <p>Path checked: ${indexPath}</p>
-            <p>Please check the deployment logs.</p>
-          </body>
-        </html>
-      `);
-    }
-  });
-} else {
-  // Development fallback
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api/')) {
-      res.status(200).send(`
-        <!DOCTYPE html>
-        <html>
-          <head><title>Development Mode</title></head>
-          <body>
-            <h1>Development Mode</h1>
-            <p>Frontend should be running on port 5173</p>
-            <p>API is available at <a href="/api/health">/api/health</a></p>
-          </body>
-        </html>
-      `);
-    }
-  });
-}
+// Backend-only: No frontend serving needed
+// Frontend will be served by Vercel
+app.get('*', (req, res) => {
+  // Only handle non-API routes with a simple message
+  if (!req.path.startsWith('/api/')) {
+    res.status(200).json({
+      message: 'Invoice AI Backend API',
+      frontend: 'https://invoice-ai-frontend.vercel.app',
+      health: '/api/health',
+      docs: '/api-docs'
+    });
+  } else {
+    res.status(404).json({ error: 'API endpoint not found' });
+  }
+});
 
 /**
  * @swagger
