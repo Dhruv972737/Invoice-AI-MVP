@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Upload, FileText, Image, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -11,7 +10,6 @@ import { FraudDetectionService } from '../../lib/ai/fraudDetection';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 // Set up PDF.js worker for Node.js 20+
-GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 // Helper function to normalize date strings to YYYY-MM-DD format
 const normalizeDateString = (dateStr: string): string => {

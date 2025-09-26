@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -9,9 +8,6 @@ export default defineConfig({
     port: 5173,
     host: true,
     strictPort: true
-  },
-  resolve: {
-    alias: {}
   },
   build: {
     outDir: 'dist',
@@ -27,6 +23,13 @@ export default defineConfig({
           supabase: ['@supabase/supabase-js'],
           pdf: ['pdfjs-dist']
         }
+      },
+      external: (id) => {
+        // Don't externalize PDF.js worker - let Vite handle it
+        if (id.includes('pdf.worker')) {
+          return false;
+        }
+        return false;
       }
     }
   },
@@ -35,6 +38,10 @@ export default defineConfig({
     include: ['@google/generative-ai', 'tesseract.js', '@supabase/supabase-js', 'pdfjs-dist']
   },
   define: {
-    global: 'globalThis',
+    global: 'globalThis'
+  },
+  assetsInclude: ['**/*.wasm', '**/*.worker.js'],
+  worker: {
+    format: 'es'
   }
 });

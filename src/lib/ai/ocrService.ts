@@ -1,9 +1,7 @@
 import Tesseract from 'tesseract.js';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 
 // Set up PDF.js worker for Node.js 20+
-GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 export interface OCRResult {
   text: string;
