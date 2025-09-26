@@ -1,8 +1,8 @@
 [phases.setup]
-nixPkgs = ['nodejs_18']
+nixPkgs = ['nodejs_20']
 
 [phases.install]
-cmds = ['rm -f package-lock.json', 'npm install']
+cmds = ['rm -f package-lock.json', 'npm install --omit=dev']
 
 [phases.build]
 cmds = ['npm run build']
