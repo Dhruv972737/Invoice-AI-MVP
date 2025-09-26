@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Upload, FileText, Image, X, CheckCircle, AlertCircle } from 'lucide-react';
-import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist/legacy/build/pdf';
-import pdfjsWorker from 'pdfjs-dist/legacy/build/pdf.worker.entry';
+import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -10,7 +10,8 @@ import { GeminiService } from '../../lib/ai/geminiService';
 import { FraudDetectionService } from '../../lib/ai/fraudDetection';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
-// Set up PDF.js worker properly
+// Set up PDF.js worker for Node.js 20+
+GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 // Helper function to normalize date strings to YYYY-MM-DD format
 const normalizeDateString = (dateStr: string): string => {
@@ -274,7 +275,11 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
   const convertPdfToImage = async (file: File): Promise<File> => {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const loadingTask = getDocument({ data: arrayBuffer });
+      const loadingTask = getDocument({ 
+        data: arrayBuffer,
+        useSystemFonts: true,
+        standardFontDataUrl: undefined
+      });
       const pdf = await loadingTask.promise;
       const page = await pdf.getPage(1); // Get first page
       

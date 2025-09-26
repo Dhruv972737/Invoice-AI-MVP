@@ -1,8 +1,9 @@
 import Tesseract from 'tesseract.js';
-import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist/legacy/build/pdf';
-import pdfjsWorker from 'pdfjs-dist/legacy/build/pdf.worker.entry';
+import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
-// Set up PDF.js worker
+// Set up PDF.js worker for Node.js 20+
+GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 export interface OCRResult {
   text: string;
@@ -113,7 +114,11 @@ export class OCRService {
   private static async convertPDFToCanvas(file: File): Promise<HTMLCanvasElement> {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const loadingTask = getDocument({ data: arrayBuffer });
+      const loadingTask = getDocument({ 
+        data: arrayBuffer,
+        useSystemFonts: true,
+        standardFontDataUrl: undefined
+      });
       const pdf = await loadingTask.promise;
       
       console.log(`📄 [OCR] PDF loaded, ${pdf.numPages} pages found`);

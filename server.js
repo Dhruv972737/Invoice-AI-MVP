@@ -20,6 +20,8 @@ const PORT = process.env.PORT || 3001;
 console.log('🚀 Starting Invoice AI Platform Server...');
 console.log('📁 Working Directory:', __dirname);
 console.log('🌍 Environment:', process.env.NODE_ENV);
+console.log('🔧 Node.js Version:', process.version);
+console.log('📦 NPM Version:', process.env.npm_version || 'Unknown');
 
 // Supabase configuration
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -30,6 +32,7 @@ console.log('- SUPABASE_URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
 console.log('- SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? '✅ Set' : '❌ Missing');
 console.log('- NODE_ENV:', process.env.NODE_ENV || 'development');
 console.log('- PORT:', PORT);
+console.log('- Node.js Version:', process.version);
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing required environment variables:');
@@ -637,6 +640,7 @@ app.listen(PORT, HOST, () => {
   console.log(`📚 API Docs: http://${HOST}:${PORT}/api-docs`);
   console.log(`📁 Working Directory: ${__dirname}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🔧 Node.js Version: ${process.version}`);
   console.log(`📊 Supabase URL: ${supabaseUrl ? 'Configured' : 'Missing'}`);
   console.log('✅ Server startup complete!');
 });

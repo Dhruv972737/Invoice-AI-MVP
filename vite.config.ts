@@ -12,7 +12,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'pdfjs-dist/build/pdf.worker.entry': 'pdfjs-dist/legacy/build/pdf.worker.entry'
+      'pdfjs-dist/build/pdf.worker.mjs': 'pdfjs-dist/build/pdf.worker.mjs'
     }
   },
   build: {
@@ -26,7 +26,7 @@ export default defineConfig({
           vendor: ['react', 'react-dom'],
           ui: ['lucide-react'],
           ai: ['@google/generative-ai', 'tesseract.js'],
-          supabase: ['@supabase/supabase-js']
+          supabase: ['@supabase/supabase-js'],
           pdf: ['pdfjs-dist']
         }
       }

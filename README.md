@@ -26,7 +26,8 @@ A comprehensive AI-powered invoice processing platform built with React, TypeScr
 ## 📦 Quick Start
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20.0.0+
+- NPM 10.0.0+
 - Supabase account
 - Google Gemini API key
 
@@ -75,6 +76,10 @@ NODE_ENV=production
 
 ### 6. Development
 ```bash
+# Check Node.js version (must be 20+)
+node --version
+npm --version
+
 # Frontend development
 npm run dev
 
