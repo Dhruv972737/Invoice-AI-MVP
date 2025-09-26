@@ -13,7 +13,7 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     target: 'es2015',
-    minify: 'terser',
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
