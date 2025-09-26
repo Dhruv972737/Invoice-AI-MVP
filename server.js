@@ -73,7 +73,16 @@ if (process.env.NODE_ENV === 'production') {
   console.log('📁 Dist directory path:', distPath);
   console.log('📁 Dist directory exists:', fs.existsSync(distPath));
   console.log('📄 Index.html exists:', fs.existsSync(indexPath));
-  app.use(express.static(path.join(__dirname, 'dist')));
+  
+  // Serve static files with proper headers
+  app.use(express.static(path.join(__dirname, 'dist'), {
+    maxAge: '1d',
+    setHeaders: (res, path) => {
+      if (path.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    }
+  }));
 } else {
   console.log('🔧 Development mode: not serving static files');
 }
@@ -186,13 +195,17 @@ console.log('🛣️ Setting up API routes...');
  *                   example: "1.0.0"
  */
 app.get('/api/health', (req, res) => {
-  console.log('🏥 Health check requested');
+  console.log('🏥 Health check requested from:', req.ip);
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
-    port: PORT
+    port: PORT,
+    frontend: {
+      distExists: fs.existsSync(path.join(__dirname, 'dist')),
+      indexExists: fs.existsSync(path.join(__dirname, 'dist', 'index.html'))
+    }
   });
 });
 
@@ -523,15 +536,42 @@ app.get('/api/user/profile', authenticateUser, async (req, res) => {
 if (process.env.NODE_ENV === 'production') {
   console.log('🌐 Setting up React app serving for production...');
   app.get('*', (req, res) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    
     const indexPath = path.join(__dirname, 'dist', 'index.html');
     console.log('📄 Serving index.html from:', indexPath);
     console.log('📄 Index.html exists:', fs.existsSync(indexPath));
     
     if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
+      res.sendFile(indexPath, (err) => {
+        if (err) {
+          console.error('❌ Error serving index.html:', err);
+          res.status(500).send('Error loading application');
+        }
+      });
     } else {
       console.error('❌ index.html not found at:', indexPath);
       res.status(404).send('Frontend files not found. Please ensure the build was successful.');
+    }
+  });
+} else {
+  // Development fallback
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api/')) {
+      res.status(200).send(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>Development Mode</title></head>
+          <body>
+            <h1>Development Mode</h1>
+            <p>Frontend should be running on port 5173</p>
+            <p>API is available at <a href="/api/health">/api/health</a></p>
+          </body>
+        </html>
+      `);
     }
   });
 }
@@ -612,7 +652,9 @@ if (process.env.NODE_ENV === 'production') {
 
 // Error handling middleware
 app.use((error, req, res, next) => {
-  console.error('Unhandled error:', error);
+  console.error('❌ Unhandled error:', error);
+  console.error('Request path:', req.path);
+  console.error('Request method:', req.method);
   
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
@@ -622,12 +664,14 @@ app.use((error, req, res, next) => {
   
   res.status(500).json({ 
     error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
+    path: req.path
   });
 });
 
 // 404 handler
-app.use('/api/*', (req, res) => {
+app.use('/api/*', (req, res, next) => {
+  console.log('❌ API 404:', req.method, req.path);
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
@@ -642,11 +686,26 @@ app.listen(PORT, HOST, () => {
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔧 Node.js Version: ${process.version}`);
   console.log(`📊 Supabase URL: ${supabaseUrl ? 'Configured' : 'Missing'}`);
+  
+  // Additional diagnostics
+  const distPath = path.join(__dirname, 'dist');
+  const indexPath = path.join(distPath, 'index.html');
+  console.log(`📁 Frontend files check:`);
+  console.log(`   - Dist directory: ${fs.existsSync(distPath) ? '✅' : '❌'}`);
+  console.log(`   - Index.html: ${fs.existsSync(indexPath) ? '✅' : '❌'}`);
+  
+  if (fs.existsSync(distPath)) {
+    const files = fs.readdirSync(distPath);
+    console.log(`   - Files in dist: ${files.length} files`);
+    console.log(`   - Sample files: ${files.slice(0, 5).join(', ')}`);
+  }
+  
   console.log('✅ Server startup complete!');
   
   // Additional health check logging for Railway
   console.log(`🏥 Railway Health Check URL: http://0.0.0.0:${PORT}/api/health`);
   console.log(`🏥 Health endpoint ready for Railway healthcheck`);
+  console.log(`🌐 Frontend should be available at: https://your-app.railway.app`);
 });
 
 export default app;
