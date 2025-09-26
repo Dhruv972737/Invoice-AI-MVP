@@ -17,8 +17,16 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Supabase configuration
-const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('Missing required environment variables:');
+  console.error('SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
+  console.error('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'Set' : 'Missing');
+  process.exit(1);
+}
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Middleware
@@ -42,6 +50,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files from dist directory
 if (process.env.NODE_ENV === 'production') {
+  console.log('Production mode: serving static files from dist directory');
+  console.log('Dist directory exists:', require('fs').existsSync(path.join(__dirname, 'dist')));
   app.use(express.static(path.join(__dirname, 'dist')));
 }
 
@@ -481,7 +491,10 @@ app.get('/api/user/profile', authenticateUser, async (req, res) => {
 // Serve React app for all other routes in production
 if (process.env.NODE_ENV === 'production') {
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    const indexPath = path.join(__dirname, 'dist', 'index.html');
+    console.log('Serving index.html from:', indexPath);
+    console.log('Index.html exists:', require('fs').existsSync(indexPath));
+    res.sendFile(indexPath);
   });
 }
 
@@ -581,11 +594,13 @@ app.use('*', (req, res) => {
 });
 
 const HOST = '0.0.0.0';
-const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on ${HOST}:${PORT}`);
   console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
+  console.log(`📁 Working Directory: ${__dirname}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`📊 Supabase URL: ${supabaseUrl ? 'Configured' : 'Missing'}`);
 });
 
 export default app;
