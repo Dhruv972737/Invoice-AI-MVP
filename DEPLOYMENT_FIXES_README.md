@@ -307,13 +307,7 @@ After implementing these changes:
 ## Environment Variables Checklist
 
 Ensure these are set in Railway:
-- ✅ `NODE_ENV=production`
-- ✅ `VITE_SUPABASE_URL=https://amopwxxreyvshvfzzvsd.supabase.co`
-- ✅ `VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
-- ✅ `VITE_GEMINI_API_KEY=AIzaSyCffgO5rRv23JUBDevS4YLPiljvUn0zrdk`
-- ✅ `SUPABASE_URL=https://amopwxxreyvshvfzzvsd.supabase.co`
-- ✅ `SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
-- ✅ `FRONTEND_URL=https://invoice-ai-mvp-production.up.railway.app`
+
 
 ---
 
