@@ -51,9 +51,9 @@ app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        'https://invoice-ai-frontend.netlify.app',
+        'https://invoice-ai-mvp.netlify.app',
         'https://*.netlify.app',
-        process.env.FRONTEND_URL || 'https://invoice-ai-frontend.netlify.app'
+        process.env.FRONTEND_URL || 'https://invoice-ai-mvp.netlify.app'
       ]
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
@@ -88,7 +88,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'https://invoice-ai-mvp-production.up.railway.app',
+        url: 'https://invoice-ai-mvp-production.up.railway.app/api',
         description: 'Invoice AI Platform API Server'
       }
     ],
@@ -551,7 +551,7 @@ app.get('*', (req, res) => {
   if (!req.path.startsWith('/api/')) {
     res.status(200).json({
       message: 'Invoice AI Backend API',
-      frontend: 'https://invoice-ai-frontend.netlify.app',
+      frontend: 'https://invoice-ai-mvp.netlify.app',
       health: '/api/health',
       docs: '/api-docs'
     });
