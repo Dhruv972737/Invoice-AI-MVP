@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -8,6 +9,11 @@ export default defineConfig({
     port: 5173,
     host: true,
     strictPort: true
+  },
+  resolve: {
+    alias: {
+      'pdfjs-dist/build/pdf.worker.entry': 'pdfjs-dist/legacy/build/pdf.worker.entry'
+    }
   },
   build: {
     outDir: 'dist',
@@ -21,13 +27,14 @@ export default defineConfig({
           ui: ['lucide-react'],
           ai: ['@google/generative-ai', 'tesseract.js'],
           supabase: ['@supabase/supabase-js']
+          pdf: ['pdfjs-dist']
         }
       }
     }
   },
   optimizeDeps: {
     exclude: ['lucide-react'],
-    include: ['@google/generative-ai', 'tesseract.js', '@supabase/supabase-js']
+    include: ['@google/generative-ai', 'tesseract.js', '@supabase/supabase-js', 'pdfjs-dist']
   },
   define: {
     global: 'globalThis',
