@@ -575,10 +575,12 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Invoice AI Backend running on port ${PORT}`);
-  console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
-  console.log(`🏥 Health Check: http://localhost:${PORT}/api/health`);
+const HOST = '0.0.0.0';
+const PORT = process.env.PORT || 3001;
+
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server running on ${HOST}:${PORT}`);
+  console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
 });
 
 module.exports = app;
