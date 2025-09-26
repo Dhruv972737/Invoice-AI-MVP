@@ -1,56 +1,32 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../types/database';
 
-// Handle IPv4/IPv6 compatibility
+// Get environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Force IPv4 resolution if needed
-const getSupabaseUrl = () => {
-  if (!supabaseUrl) return '';
-  
-  // If running on Vercel and having IPv6 issues, try IPv4 endpoint
-  if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
-    // You can replace this with your project's IPv4 endpoint if available
-    return supabaseUrl;
-  }
-  
-  return supabaseUrl;
-};
-
 // Validate environment variables
-const finalSupabaseUrl = getSupabaseUrl();
-if (!finalSupabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase environment variables');
-  console.error('VITE_SUPABASE_URL:', finalSupabaseUrl ? 'Set' : 'Missing');
+  console.error('VITE_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
   console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set' : 'Missing');
   
   // In development, show helpful message
   if (import.meta.env.DEV) {
     console.error('Please check your .env file and ensure all Supabase variables are set');
   }
+  
+  // Throw error to prevent client creation with invalid config
+  throw new Error('Supabase configuration is missing. Please check your environment variables.');
 }
 
-export const supabase = createClient<Database>(finalSupabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
     debug: import.meta.env.DEV
-  },
-  global: {
-    // Add fetch options for better IPv4/IPv6 handling
-    fetch: (url, options = {}) => {
-      return fetch(url, {
-        ...options,
-        // Add headers that might help with connectivity
-        headers: {
-          ...options.headers,
-          'User-Agent': 'InvoiceAI/1.0'
-        }
-      });
-    }
   }
 });
 

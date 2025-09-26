@@ -16,51 +16,39 @@ function App() {
     // Check Supabase configuration
     if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
       console.error('Supabase environment variables are missing!');
+      console.error('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL ? 'Set' : 'Missing');
+      console.error('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Set' : 'Missing');
       setLoading(false);
       return;
     }
     
-    // Test Supabase connectivity
-    const testConnection = async () => {
-      try {
-        console.log('Testing Supabase connection...');
-        console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-        console.log('User Agent:', navigator.userAgent);
-        console.log('Location:', window.location.href);
-        
-        const { data, error } = await supabase.from('profiles').select('count').limit(1);
-        if (error) {
-          console.error('Supabase connection test failed:', error);
-        } else {
-          console.log('Supabase connection test successful');
-        }
-      } catch (err) {
-        console.error('Supabase connection test error:', err);
-      }
-    };
-    
-    testConnection();
-    
     // Get initial session with refresh token error handling
     const initializeSession = async () => {
       try {
+        console.log('Initializing Supabase session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           // Handle refresh token errors by clearing invalid session
           if (error.message.includes('Refresh Token Not Found') || error.message.includes('Invalid Refresh Token')) {
+            console.log('Clearing invalid refresh token...');
             await supabase.auth.signOut();
             setUser(null);
           } else {
             console.error('Supabase connection error:', error);
           }
         } else {
+          console.log('Session initialized successfully');
           setUser(session?.user ?? null);
         }
       } catch (error) {
         console.error('Failed to connect to Supabase:', error);
         // Clear any potentially corrupted session data
-        await supabase.auth.signOut();
+        try {
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.error('Failed to sign out:', signOutError);
+        }
         setUser(null);
       } finally {
         setLoading(false);
