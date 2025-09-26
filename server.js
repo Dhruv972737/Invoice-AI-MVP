@@ -588,4 +588,4 @@ app.listen(PORT, HOST, () => {
   console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
 });
 
-module.exports = app;
+export default app;
