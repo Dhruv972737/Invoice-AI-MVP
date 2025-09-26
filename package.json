@@ -45,9 +45,6 @@
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.3",
-    "typescript-eslint": "^8.3.0",
-    "postbuild": "echo 'Build completed successfully'",
-    "check-node": "node --version && npm --version",
-    "clean": "rm -rf node_modules/.cache && rm -rf dist"
+    "typescript-eslint": "^8.3.0"
   }
 }
