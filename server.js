@@ -75,11 +75,17 @@ if (process.env.NODE_ENV === 'production') {
   console.log('📄 Index.html exists:', fs.existsSync(indexPath));
   
   // Serve static files with proper headers
-  app.use(express.static(path.join(__dirname, 'dist'), {
-    maxAge: '1d',
-    setHeaders: (res, path) => {
-      if (path.endsWith('.html')) {
-        res.setHeader('Cache-Control', 'no-cache');
+  app.use(express.static(distPath, {
+    maxAge: process.env.NODE_ENV === 'production' ? '1d' : '0',
+    etag: false,
+    lastModified: false,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      } else if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
       }
     }
   }));
@@ -196,15 +202,44 @@ console.log('🛣️ Setting up API routes...');
  */
 app.get('/api/health', (req, res) => {
   console.log('🏥 Health check requested from:', req.ip);
+  
+  // Check frontend files
+  const distPath = path.join(__dirname, 'dist');
+  const indexPath = path.join(distPath, 'index.html');
+  const distExists = fs.existsSync(distPath);
+  const indexExists = fs.existsSync(indexPath);
+  
+  let distFiles = [];
+  if (distExists) {
+    try {
+      distFiles = fs.readdirSync(distPath).slice(0, 10); // First 10 files
+    } catch (err) {
+      console.error('Error reading dist directory:', err);
+    }
+  }
+  
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
     port: PORT,
+    server: {
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      nodeVersion: process.version
+    },
     frontend: {
-      distExists: fs.existsSync(path.join(__dirname, 'dist')),
-      indexExists: fs.existsSync(path.join(__dirname, 'dist', 'index.html'))
+      distExists,
+      indexExists,
+      distPath,
+      indexPath,
+      distFiles: distFiles.length > 0 ? distFiles : 'No files found',
+      staticMiddleware: process.env.NODE_ENV === 'production' ? 'enabled' : 'disabled'
+    },
+    supabase: {
+      configured: !!(supabaseUrl && supabaseServiceKey),
+      url: supabaseUrl ? 'Set' : 'Missing'
     }
   });
 });
@@ -536,25 +571,58 @@ app.get('/api/user/profile', authenticateUser, async (req, res) => {
 if (process.env.NODE_ENV === 'production') {
   console.log('🌐 Setting up React app serving for production...');
   app.get('*', (req, res) => {
-    // Skip API routes
+    // Skip API routes and health checks
     if (req.path.startsWith('/api/')) {
       return res.status(404).json({ error: 'API endpoint not found' });
     }
     
+    // Skip favicon and other assets
+    if (req.path.match(/\.(ico|png|jpg|jpeg|gif|svg|css|js|woff|woff2|ttf|eot)$/)) {
+      return res.status(404).send('Asset not found');
+    }
+    
     const indexPath = path.join(__dirname, 'dist', 'index.html');
-    console.log('📄 Serving index.html from:', indexPath);
-    console.log('📄 Index.html exists:', fs.existsSync(indexPath));
+    console.log(`📄 [${new Date().toISOString()}] Serving SPA route: ${req.path}`);
     
     if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath, (err) => {
+      // Set proper headers for HTML
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      
+      res.sendFile(indexPath, { 
+        maxAge: 0,
+        etag: false,
+        lastModified: false 
+      }, (err) => {
         if (err) {
-          console.error('❌ Error serving index.html:', err);
-          res.status(500).send('Error loading application');
+          console.error(`❌ [${new Date().toISOString()}] Error serving index.html for ${req.path}:`, err);
+          res.status(500).send(`
+            <!DOCTYPE html>
+            <html>
+              <head><title>Application Error</title></head>
+              <body>
+                <h1>Application Error</h1>
+                <p>Failed to load the application. Please try refreshing the page.</p>
+                <p>Error: ${err.message}</p>
+              </body>
+            </html>
+          `);
         }
       });
     } else {
-      console.error('❌ index.html not found at:', indexPath);
-      res.status(404).send('Frontend files not found. Please ensure the build was successful.');
+      console.error(`❌ [${new Date().toISOString()}] index.html not found at:`, indexPath);
+      res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>Build Error</title></head>
+          <body>
+            <h1>Build Error</h1>
+            <p>Frontend files not found. The build may have failed.</p>
+            <p>Path checked: ${indexPath}</p>
+            <p>Please check the deployment logs.</p>
+          </body>
+        </html>
+      `);
     }
   });
 } else {
@@ -695,17 +763,28 @@ app.listen(PORT, HOST, () => {
   console.log(`   - Index.html: ${fs.existsSync(indexPath) ? '✅' : '❌'}`);
   
   if (fs.existsSync(distPath)) {
-    const files = fs.readdirSync(distPath);
-    console.log(`   - Files in dist: ${files.length} files`);
-    console.log(`   - Sample files: ${files.slice(0, 5).join(', ')}`);
+    try {
+      const files = fs.readdirSync(distPath);
+      console.log(`   - Files in dist: ${files.length} files`);
+      console.log(`   - Sample files: ${files.slice(0, 5).join(', ')}`);
+      
+      // Check for essential files
+      const hasJS = files.some(f => f.endsWith('.js'));
+      const hasCSS = files.some(f => f.endsWith('.css'));
+      console.log(`   - JavaScript files: ${hasJS ? '✅' : '❌'}`);
+      console.log(`   - CSS files: ${hasCSS ? '✅' : '❌'}`);
+    } catch (err) {
+      console.error(`   - Error reading dist directory: ${err.message}`);
+    }
   }
   
   console.log('✅ Server startup complete!');
   
   // Additional health check logging for Railway
-  console.log(`🏥 Railway Health Check URL: http://0.0.0.0:${PORT}/api/health`);
+  console.log(`🏥 Railway Health Check URL: https://invoice-ai-mvp-production.up.railway.app/api/health`);
   console.log(`🏥 Health endpoint ready for Railway healthcheck`);
-  console.log(`🌐 Frontend should be available at: https://your-app.railway.app`);
+  console.log(`🌐 Frontend should be available at: https://invoice-ai-mvp-production.up.railway.app`);
+  console.log(`📚 API Documentation: https://invoice-ai-mvp-production.up.railway.app/api-docs`);
 });
 
 export default app;
