@@ -51,9 +51,9 @@ app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        process.env.FRONTEND_URL || 'https://invoice-ai-mvp-production.up.railway.app',
         'https://invoice-ai-frontend.netlify.app',
-        'https://*.netlify.app'
+        'https://*.netlify.app',
+        process.env.FRONTEND_URL || 'https://invoice-ai-frontend.netlify.app'
       ]
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
@@ -70,7 +70,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Backend-only mode - no static file serving
-console.log('🔧 Backend-only mode: Frontend will be served by Vercel');
+console.log('🔧 Backend-only mode: Frontend will be served by Netlify');
 
 // Swagger configuration
 console.log('📚 Setting up API documentation...');
@@ -88,10 +88,8 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: process.env.NODE_ENV === 'production' 
-          ? 'https://invoice-ai-frontend.netlify.app'
-          : 'http://localhost:3001',
-        description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server'
+        url: 'https://invoice-ai-mvp-production.up.railway.app',
+        description: 'Invoice AI Platform API Server'
       }
     ],
     components: {
@@ -547,7 +545,7 @@ app.get('/api/user/profile', authenticateUser, async (req, res) => {
 });
 
 // Backend-only: No frontend serving needed
-// Frontend will be served by Vercel
+// Frontend will be served by Netlify
 app.get('*', (req, res) => {
   // Only handle non-API routes with a simple message
   if (!req.path.startsWith('/api/')) {

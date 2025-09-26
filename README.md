@@ -88,38 +88,35 @@ npm run build
 npm start
 ```
 
-## 🚂 Railway Deployment
+## 🚀 Deployment
 
-### Step 1: Prepare Repository
+### Frontend (Netlify)
+
+1. **Push to GitHub:**
 ```bash
 git add .
-git commit -m "Ready for Railway deployment"
+git commit -m "Ready for Netlify deployment"
 git push origin main
 ```
 
-### Step 2: Deploy to Railway
-1. Go to [Railway](https://railway.app)
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Select your repository
-4. Railway will auto-detect and deploy
+2. **Deploy to Netlify:**
+   - Go to [netlify.com](https://netlify.com)
+   - Click "New site from Git"
+   - Select your GitHub repository
+   - Build settings are configured in `netlify.toml`
 
-### Step 3: Environment Variables
-Add these in Railway dashboard:
+3. **Add Environment Variables in Netlify:**
 ```bash
-NODE_ENV=production
 VITE_SUPABASE_URL=your-supabase-url
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_GEMINI_API_KEY=your-gemini-key
-SUPABASE_URL=your-supabase-url
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-FRONTEND_URL=https://your-app.railway.app
 ```
 
-### Step 4: Update URLs
-After deployment, update:
-- Google OAuth redirect URLs
-- Supabase Auth site URL
-- CORS origins in your app
+### Backend (Railway)
+
+Backend is already deployed at: `https://invoice-ai-mvp-production.up.railway.app`
+
+The `netlify.toml` configuration automatically proxies API calls to Railway.
 
 ## 📁 Project Structure
 
@@ -156,15 +153,11 @@ FRONTEND_URL=https://your-app.railway.app
 
 ## 🧪 Testing
 
-### Test Invoice Processing
-1. Upload a PDF or image invoice
-2. Watch real-time AI processing
-3. Check extracted data in dashboard
-4. Test AI chatbot queries
+### Testing
 
-### API Testing
-- Health check: `https://your-app.railway.app/api/health`
-- API docs: `https://your-app.railway.app/api-docs`
+**Frontend**: `https://your-site.netlify.app`
+**Backend Health**: `https://invoice-ai-mvp-production.up.railway.app/api/health`
+**API Docs**: `https://invoice-ai-mvp-production.up.railway.app/api-docs`
 
 ## 🚨 Troubleshooting
 
@@ -194,13 +187,13 @@ FRONTEND_URL=https://your-app.railway.app
 
 ## 🔗 Links
 
-- **Railway**: [railway.app](https://railway.app)
+- **Netlify**: [netlify.com](https://netlify.com)
+- **Railway**: [railway.app](https://railway.app) (backend only)
 - **Supabase**: [supabase.com](https://supabase.com)
 - **Google AI Studio**: [makersuite.google.com](https://makersuite.google.com)
 
 ---
 
-Built with ❤️ using React, TypeScript, Supabase, Google Gemini AI, and Tesseract.js
 =======
 # Invoice-AI-MVP
 AI-powered invoice processing platform with OCR, fraud detection and chatbot.
