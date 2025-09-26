@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "NODE_ENV=production node server.js",
+    "start": "node server.js",
     "postbuild": "echo 'Build completed successfully'"
   },
   "dependencies": {
@@ -29,8 +29,8 @@
     "tesseract.js": "^6.0.1"
   },
   "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
+    "node": ">=18.0.0 <19.0.0",
+    "npm": ">=9.0.0 <10.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
@@ -47,6 +47,7 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
     "postbuild": "echo 'Build completed successfully'",
-    "check-node": "node --version && npm --version"
+    "check-node": "node --version && npm --version",
+    "clean": "rm -rf node_modules/.cache && rm -rf dist"
   }
 }

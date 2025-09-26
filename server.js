@@ -639,10 +639,14 @@ app.listen(PORT, HOST, () => {
   console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
   console.log(`📚 API Docs: http://${HOST}:${PORT}/api-docs`);
   console.log(`📁 Working Directory: ${__dirname}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔧 Node.js Version: ${process.version}`);
   console.log(`📊 Supabase URL: ${supabaseUrl ? 'Configured' : 'Missing'}`);
   console.log('✅ Server startup complete!');
+  
+  // Additional health check logging for Railway
+  console.log(`🏥 Railway Health Check URL: http://0.0.0.0:${PORT}/api/health`);
+  console.log(`🏥 Health endpoint ready for Railway healthcheck`);
 });
 
 export default app;
