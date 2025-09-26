@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Invoice AI Platform
 
 A comprehensive AI-powered invoice processing platform built with React, TypeScript, Supabase, and Google Gemini AI. Features real OCR extraction with Tesseract.js, advanced fraud detection, tax compliance, and intelligent chatbot assistance.
@@ -195,3 +196,7 @@ FRONTEND_URL=https://your-app.railway.app
 ---
 
 Built with ❤️ using React, TypeScript, Supabase, Google Gemini AI, and Tesseract.js
+=======
+# Invoice-AI-MVP
+AI-powered invoice processing platform with OCR, fraud detection and chatbot.
+>>>>>>> 6b40315181b5eb9c68b209df2207d723cf3e1afa
