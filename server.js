@@ -74,18 +74,32 @@ if (process.env.NODE_ENV === 'production') {
   console.log('📁 Dist directory exists:', fs.existsSync(distPath));
   console.log('📄 Index.html exists:', fs.existsSync(indexPath));
   
+  // Check if build files exist
+  if (!fs.existsSync(distPath)) {
+    console.error('❌ CRITICAL: dist directory not found! Frontend build may have failed.');
+    console.error('📁 Current directory contents:', fs.readdirSync(__dirname));
+  }
+  
+  if (!fs.existsSync(indexPath)) {
+    console.error('❌ CRITICAL: index.html not found! Frontend build incomplete.');
+    if (fs.existsSync(distPath)) {
+      console.error('📁 Dist directory contents:', fs.readdirSync(distPath));
+    }
+  }
+  
   // Serve static files with proper headers
   app.use(express.static(distPath, {
-    maxAge: process.env.NODE_ENV === 'production' ? '1d' : '0',
-    etag: false,
-    lastModified: false,
+    maxAge: '1h',
+    etag: true,
+    lastModified: true,
+    index: false, // Don't serve index.html automatically
     setHeaders: (res, filePath) => {
       if (filePath.endsWith('.html')) {
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
       } else if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
       }
     }
   }));
@@ -571,46 +585,43 @@ app.get('/api/user/profile', authenticateUser, async (req, res) => {
 if (process.env.NODE_ENV === 'production') {
   console.log('🌐 Setting up React app serving for production...');
   app.get('*', (req, res) => {
-    // Skip API routes and health checks
+    // Skip API routes
     if (req.path.startsWith('/api/')) {
       return res.status(404).json({ error: 'API endpoint not found' });
     }
     
-    // Skip favicon and other assets
-    if (req.path.match(/\.(ico|png|jpg|jpeg|gif|svg|css|js|woff|woff2|ttf|eot)$/)) {
-      return res.status(404).send('Asset not found');
+    // Skip assets that should be served by static middleware
+    if (req.path.match(/\.(ico|png|jpg|jpeg|gif|svg|css|js|woff|woff2|ttf|eot|map)$/)) {
+      return res.status(404).send('Static asset not found');
     }
     
     const indexPath = path.join(__dirname, 'dist', 'index.html');
-    console.log(`📄 [${new Date().toISOString()}] Serving SPA route: ${req.path}`);
+    console.log(`📄 Serving SPA route: ${req.path}`);
     
     if (fs.existsSync(indexPath)) {
-      // Set proper headers for HTML
-      res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      
-      res.sendFile(indexPath, { 
-        maxAge: 0,
-        etag: false,
-        lastModified: false 
-      }, (err) => {
-        if (err) {
-          console.error(`❌ [${new Date().toISOString()}] Error serving index.html for ${req.path}:`, err);
-          res.status(500).send(`
-            <!DOCTYPE html>
-            <html>
-              <head><title>Application Error</title></head>
-              <body>
-                <h1>Application Error</h1>
-                <p>Failed to load the application. Please try refreshing the page.</p>
-                <p>Error: ${err.message}</p>
-              </body>
-            </html>
-          `);
-        }
-      });
+      try {
+        const htmlContent = fs.readFileSync(indexPath, 'utf8');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.send(htmlContent);
+      } catch (err) {
+        console.error(`❌ Error reading index.html for ${req.path}:`, err);
+        res.status(500).send(`
+          <!DOCTYPE html>
+          <html>
+            <head><title>Application Error</title></head>
+            <body>
+              <h1>Application Error</h1>
+              <p>Failed to load the application. Please try refreshing the page.</p>
+              <p>Error: ${err.message}</p>
+            </body>
+          </html>
+        `);
+      }
     } else {
-      console.error(`❌ [${new Date().toISOString()}] index.html not found at:`, indexPath);
+      console.error(`❌ index.html not found at:`, indexPath);
       res.status(404).send(`
         <!DOCTYPE html>
         <html>
