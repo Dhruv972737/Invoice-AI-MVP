@@ -90,7 +90,7 @@ npm start
 
 ## 🚀 Deployment
 
-### Frontend (Netlify)
+### Deployment (Netlify)
 
 1. **Push to GitHub:**
 ```bash
@@ -112,11 +112,6 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_GEMINI_API_KEY=your-gemini-key
 ```
 
-### Backend (Railway)
-
-Backend is already deployed at: `https://invoice-ai-mvp-production.up.railway.app`
-
-The `netlify.toml` configuration automatically proxies API calls to Railway.
 
 ## 📁 Project Structure
 
@@ -129,35 +124,24 @@ invoice-ai-platform/
 │   └── types/             # TypeScript types
 ├── supabase/
 │   └── migrations/        # Database migrations
-├── server.js              # Express.js backend
-├── railway.json           # Railway configuration
+├── netlify.toml           # Netlify configuration
 └── package.json           # Dependencies
 ```
 
 ## 🔧 Configuration
 
-### Frontend Environment Variables
+### Environment Variables
 ```bash
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_GEMINI_API_KEY=your-gemini-key
 ```
 
-### Backend Environment Variables
-```bash
-NODE_ENV=production
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-FRONTEND_URL=https://your-app.railway.app
-```
 
 ## 🧪 Testing
 
-### Testing
+### URLs
 
-**Frontend**: `https://your-site.netlify.app`
-**Backend Health**: `https://invoice-ai-mvp-production.up.railway.app/api/health`
-**API Docs**: `https://invoice-ai-mvp-production.up.railway.app/api-docs`
 
 ## 🚨 Troubleshooting
 
@@ -188,7 +172,6 @@ FRONTEND_URL=https://your-app.railway.app
 ## 🔗 Links
 
 - **Netlify**: [netlify.com](https://netlify.com)
-- **Railway**: [railway.app](https://railway.app) (backend only)
 - **Supabase**: [supabase.com](https://supabase.com)
 - **Google AI Studio**: [makersuite.google.com](https://makersuite.google.com)
 
