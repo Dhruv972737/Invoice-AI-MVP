@@ -20,6 +20,27 @@ function App() {
       return;
     }
     
+    // Test Supabase connectivity
+    const testConnection = async () => {
+      try {
+        console.log('Testing Supabase connection...');
+        console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+        console.log('User Agent:', navigator.userAgent);
+        console.log('Location:', window.location.href);
+        
+        const { data, error } = await supabase.from('profiles').select('count').limit(1);
+        if (error) {
+          console.error('Supabase connection test failed:', error);
+        } else {
+          console.log('Supabase connection test successful');
+        }
+      } catch (err) {
+        console.error('Supabase connection test error:', err);
+      }
+    };
+    
+    testConnection();
+    
     // Get initial session with refresh token error handling
     const initializeSession = async () => {
       try {
