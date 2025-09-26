@@ -25,7 +25,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL || 'https://your-app.railway.app'] 
+    ? [process.env.FRONTEND_URL || 'https://invoice-ai-mvp-production.up.railway.app'] 
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
