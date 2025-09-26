@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "NODE_ENV=production node server.js"
+    "start": "NODE_ENV=production node server.js",
+    "postbuild": "echo 'Build completed successfully'"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

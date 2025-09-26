@@ -26,6 +26,7 @@ export class GeminiService {
 
   constructor(apiKey: string) {
     this.genAI = new GoogleGenerativeAI(apiKey);
+    console.log('🤖 Gemini AI service initialized');
   }
 
   private async getAvailableModels(): Promise<string[]> {
@@ -35,7 +36,7 @@ export class GeminiService {
 
     // Use hardcoded list of common models since listModels() is not available
     this.availableModels = ['gemini-pro', 'gemini-1.5-pro', 'text-bison-001'];
-    console.log('Using hardcoded Gemini models:', this.availableModels);
+    console.log('🤖 Using hardcoded Gemini models:', this.availableModels);
     return this.availableModels;
   }
 
@@ -57,7 +58,7 @@ export class GeminiService {
     for (const preferred of priorities) {
       if (available.includes(preferred)) {
         this.selectedModel = preferred;
-        console.log('Selected Gemini model:', this.selectedModel);
+        console.log('🤖 Selected Gemini model:', this.selectedModel);
         return this.selectedModel;
       }
     }
@@ -65,7 +66,7 @@ export class GeminiService {
     // If no preferred models found, use the first available
     if (available.length > 0) {
       this.selectedModel = available[0];
-      console.log('Using first available model:', this.selectedModel);
+      console.log('🤖 Using first available model:', this.selectedModel);
       return this.selectedModel;
     }
 
@@ -73,6 +74,7 @@ export class GeminiService {
   }
 
   private async generateWithModel(modelName: string, prompt: string): Promise<string> {
+    console.log(`🤖 Generating response with model: ${modelName}`);
     const model = this.genAI.getGenerativeModel({ model: modelName });
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -85,6 +87,7 @@ export class GeminiService {
     chatHistory: ChatMessage[] = []
   ): Promise<string> {
     try {
+      console.log('🤖 Generating AI response for message:', message.substring(0, 100) + '...');
       const systemPrompt = this.buildSystemPrompt(context);
       const conversationHistory = this.buildConversationHistory(chatHistory);
       
@@ -95,7 +98,7 @@ export class GeminiService {
         const modelName = await this.selectBestModel();
         return await this.generateWithModel(modelName, prompt);
       } catch (error) {
-        console.warn('Primary model failed, trying fallback:', error);
+        console.warn('🤖 Primary model failed, trying fallback:', error);
         
         // If primary model fails with 404, try another available model
         if (error instanceof Error && error.message.includes('404')) {
@@ -104,10 +107,10 @@ export class GeminiService {
           
           for (const fallbackModel of fallbackModels.slice(0, 2)) { // Try up to 2 fallbacks
             try {
-              console.log('Trying fallback model:', fallbackModel);
+              console.log('🤖 Trying fallback model:', fallbackModel);
               return await this.generateWithModel(fallbackModel, prompt);
             } catch (fallbackError) {
-              console.warn(`Fallback model ${fallbackModel} failed:`, fallbackError);
+              console.warn(`🤖 Fallback model ${fallbackModel} failed:`, fallbackError);
               continue;
             }
           }
@@ -116,7 +119,7 @@ export class GeminiService {
         throw error; // Re-throw if all models failed
       }
     } catch (error) {
-      console.error('Gemini API error:', error);
+      console.error('🤖 Gemini API error:', error);
       
       // Check if it's a quota/rate limit error
       if (error instanceof Error && 
@@ -124,13 +127,13 @@ export class GeminiService {
            error.message.includes('429') ||
            error.message.includes('rate limit') ||
            error.message.includes('exceeded your current quota'))) {
-        console.warn('Gemini API quota exceeded - this is expected with free tier limits');
+        console.warn('🤖 Gemini API quota exceeded - this is expected with free tier limits');
         throw new Error('QUOTA_EXCEEDED');
       }
       
       // If all models failed with 404 or access issues, treat as quota exceeded for graceful fallback
       if (error instanceof Error && error.message.includes('404')) {
-        console.warn('All Gemini models inaccessible - treating as quota exceeded');
+        console.warn('🤖 All Gemini models inaccessible - treating as quota exceeded');
         throw new Error('QUOTA_EXCEEDED');
       }
       
@@ -177,6 +180,7 @@ Please provide helpful, accurate responses about the user's invoice data. Be con
     confidence: number;
   }> {
     try {
+      console.log('🤖 Analyzing invoice text with Gemini AI...');
       const prompt = `Analyze this invoice OCR text and extract key information. Return a JSON object with the following fields:
 - vendor: company/vendor name
 - amount: total amount (number only)
@@ -196,7 +200,7 @@ Return only valid JSON:`;
         const modelName = await this.selectBestModel();
         responseText = await this.generateWithModel(modelName, prompt);
       } catch (error) {
-        console.warn('Primary model failed for invoice analysis, trying fallback:', error);
+        console.warn('🤖 Primary model failed for invoice analysis, trying fallback:', error);
         
         // If primary model fails with 404, try another available model
         if (error instanceof Error && error.message.includes('404')) {
@@ -206,12 +210,12 @@ Return only valid JSON:`;
           let fallbackSuccess = false;
           for (const fallbackModel of fallbackModels.slice(0, 2)) { // Try up to 2 fallbacks
             try {
-              console.log('Trying fallback model for invoice analysis:', fallbackModel);
+              console.log('🤖 Trying fallback model for invoice analysis:', fallbackModel);
               responseText = await this.generateWithModel(fallbackModel, prompt);
               fallbackSuccess = true;
               break;
             } catch (fallbackError) {
-              console.warn(`Fallback model ${fallbackModel} failed:`, fallbackError);
+              console.warn(`🤖 Fallback model ${fallbackModel} failed:`, fallbackError);
               continue;
             }
           }
@@ -227,6 +231,7 @@ Return only valid JSON:`;
       // Try to parse JSON response
       try {
         const parsed = JSON.parse(responseText!);
+        console.log('🤖 Successfully parsed Gemini response');
         return {
           vendor: parsed.vendor || null,
           amount: parsed.amount ? parseFloat(parsed.amount) : null,
@@ -236,7 +241,7 @@ Return only valid JSON:`;
           confidence: parsed.confidence || 0.7
         };
       } catch (parseError) {
-        console.error('Failed to parse Gemini JSON response:', parseError);
+        console.error('🤖 Failed to parse Gemini JSON response:', parseError);
         return {
           vendor: null,
           amount: null,
@@ -247,7 +252,7 @@ Return only valid JSON:`;
         };
       }
     } catch (error) {
-      console.error('Gemini analysis error:', error);
+      console.error('🤖 Gemini analysis error:', error);
       
       // Check if it's a quota/rate limit error
       if (error instanceof Error && 
@@ -255,14 +260,14 @@ Return only valid JSON:`;
            error.message.includes('429') ||
            error.message.includes('rate limit') ||
            error.message.includes('exceeded your current quota'))) {
-        console.warn('Gemini API quota exceeded - this is expected with free tier limits');
+        console.warn('🤖 Gemini API quota exceeded - this is expected with free tier limits');
         // Re-throw quota errors to trigger specific UI handling
         throw new Error('QUOTA_EXCEEDED');
       }
       
       // If all models failed with 404 or access issues, treat as quota exceeded
       if (error instanceof Error && error.message.includes('404')) {
-        console.warn('All Gemini models inaccessible for invoice analysis - treating as quota exceeded');
+        console.warn('🤖 All Gemini models inaccessible for invoice analysis - treating as quota exceeded');
         throw new Error('QUOTA_EXCEEDED');
       }
       
@@ -284,7 +289,7 @@ export async function generateResponse(prompt: string): Promise<string> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   
   if (!apiKey) {
-    console.error('VITE_GEMINI_API_KEY not found in environment variables');
+    console.error('🤖 VITE_GEMINI_API_KEY not found in environment variables');
     return 'AI service unavailable (missing API key)';
   }
 
@@ -301,7 +306,7 @@ export async function generateResponse(prompt: string): Promise<string> {
     
     return await service.generateResponse(prompt, emptyContext);
   } catch (error) {
-    console.error('Helper generateResponse error:', error);
+    console.error('🤖 Helper generateResponse error:', error);
     return 'AI extraction failed (fallback)';
   }
 }
@@ -310,7 +315,7 @@ export async function analyzeInvoiceText(invoiceText: string): Promise<string> {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   
   if (!apiKey) {
-    console.error('VITE_GEMINI_API_KEY not found in environment variables');
+    console.error('🤖 VITE_GEMINI_API_KEY not found in environment variables');
     return 'AI extraction failed (fallback)';
   }
 
@@ -321,7 +326,7 @@ export async function analyzeInvoiceText(invoiceText: string): Promise<string> {
     // Return a formatted string representation
     return `Vendor: ${result.vendor || 'Unknown'}, Amount: ${result.amount || 'N/A'}, Date: ${result.date || 'N/A'}`;
   } catch (error) {
-    console.error('Helper analyzeInvoiceText error:', error);
+    console.error('🤖 Helper analyzeInvoiceText error:', error);
     return 'AI extraction failed (fallback)';
   }
 }

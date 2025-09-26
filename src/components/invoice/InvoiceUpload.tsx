@@ -442,7 +442,7 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
           confidence: Math.round(ocrResult.confidence * 100) + '%'
         });
       } catch (ocrError) {
-        console.error('[OCR] Failed:', ocrError);
+        console.error('📄 [OCR] Failed:', ocrError);
         // This should never happen with the robust OCR service, but just in case
         ocrResult = {
           text: 'Emergency fallback - OCR service failed completely',
@@ -459,17 +459,17 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
       if (geminiService && ocrResult.text) {
         try {
           extractedData = await geminiService.analyzeInvoiceText(ocrResult.text);
-          console.log('Gemini AI extraction successful');
+          console.log('🤖 Gemini AI extraction successful');
         } catch (aiError) {
           if (aiError instanceof Error && aiError.message === 'QUOTA_EXCEEDED') {
-            console.warn('Gemini API quota exceeded - using pattern matching fallback');
+            console.warn('🤖 Gemini API quota exceeded - using pattern matching fallback');
           } else {
-            console.error('AI extraction failed:', aiError);
+            console.error('🤖 AI extraction failed:', aiError);
           }
           extractedData = null;
         }
       } else if (!geminiService) {
-        console.log('Gemini service not available - using pattern matching');
+        console.log('🤖 Gemini service not available - using pattern matching');
       }
 
       // Step 3: Language Detection
@@ -501,7 +501,7 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
 
       // If AI extraction failed, try basic pattern matching on OCR text
       if (!extractedData && ocrResult.text) {
-        console.log('AI extraction failed, using pattern matching on OCR text:', ocrResult.text.substring(0, 200));
+        console.log('🔍 AI extraction failed, using pattern matching on OCR text:', ocrResult.text.substring(0, 200));
         
         // Use enhanced extraction with regex and entity recognition
         const extractionResult = extractInvoiceFields(ocrResult.text);
@@ -512,19 +512,19 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
         finalTaxId = extractionResult.vat_number;
         finalCurrency = extractionResult.currency || 'USD';
         
-        console.log('Enhanced extraction results:', extractionResult);
+        console.log('🔍 Enhanced extraction results:', extractionResult);
       }
 
       // Only use fallback data if OCR completely failed AND pattern matching found nothing
       if ((!ocrResult.text || ocrResult.confidence < 0.1) && !finalVendor && !finalAmount) {
-        console.log('OCR failed completely, using fallback data');
+        console.log('⚠️ OCR failed completely, using fallback data');
         finalVendor = finalVendor || ['Acme Corp', 'TechSupply Ltd', 'Office Depot'][Math.floor(Math.random() * 3)];
         finalAmount = finalAmount || Math.floor(Math.random() * 5000) + 100;
         finalDate = finalDate || normalizeDateString('');
         finalTaxId = finalTaxId || `TX${Math.random().toString().slice(2, 8)}`;
       }
       
-      console.log('Final extracted data:', {
+      console.log('✅ Final extracted data:', {
         vendor: finalVendor,
         amount: finalAmount,
         date: finalDate,
@@ -612,11 +612,11 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
       );
 
       const extractionMethod = extractedData ? 'AI extraction' : (ocrResult.text ? 'Pattern matching' : 'Fallback data');
-      showToast('success', 'Processing complete', 
+      showToast('success', '✅ Processing complete', 
         `Invoice processed using ${extractionMethod} (${Math.round(ocrResult.confidence * 100)}% OCR confidence)`);
 
     } catch (error: any) {
-      console.error('AI processing error:', error);
+      console.error('❌ AI processing error:', error);
       
       // Fallback to mock data if AI processing fails
       const mockResults = {
@@ -656,7 +656,7 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
         } : f)
       );
 
-      showToast('error', 'Processing failed', 
+      showToast('error', '❌ Processing failed', 
         'OCR and AI extraction failed - please try a clearer image');
     }
   };

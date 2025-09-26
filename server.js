@@ -9,6 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,20 +17,33 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+console.log('🚀 Starting Invoice AI Platform Server...');
+console.log('📁 Working Directory:', __dirname);
+console.log('🌍 Environment:', process.env.NODE_ENV);
+
 // Supabase configuration
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+console.log('🔧 Environment Variables Check:');
+console.log('- SUPABASE_URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
+console.log('- SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? '✅ Set' : '❌ Missing');
+console.log('- NODE_ENV:', process.env.NODE_ENV || 'development');
+console.log('- PORT:', PORT);
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing required environment variables:');
   console.error('SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
   console.error('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'Set' : 'Missing');
+  console.error('Please check your Railway environment variables configuration.');
   process.exit(1);
 }
 
+console.log('✅ Supabase configuration validated');
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Middleware
+console.log('🔧 Setting up middleware...');
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
@@ -51,11 +65,18 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Serve static files from dist directory
 if (process.env.NODE_ENV === 'production') {
   console.log('Production mode: serving static files from dist directory');
-  console.log('Dist directory exists:', require('fs').existsSync(path.join(__dirname, 'dist')));
+  const distPath = path.join(__dirname, 'dist');
+  const indexPath = path.join(distPath, 'index.html');
+  console.log('📁 Dist directory path:', distPath);
+  console.log('📁 Dist directory exists:', fs.existsSync(distPath));
+  console.log('📄 Index.html exists:', fs.existsSync(indexPath));
   app.use(express.static(path.join(__dirname, 'dist')));
+} else {
+  console.log('🔧 Development mode: not serving static files');
 }
 
 // Swagger configuration
+console.log('📚 Setting up API documentation...');
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -71,7 +92,7 @@ const swaggerOptions = {
     servers: [
       {
         url: process.env.NODE_ENV === 'production' 
-          ? 'https://your-backend.railway.app' 
+          ? process.env.FRONTEND_URL || 'https://invoice-ai-mvp-production.up.railway.app'
           : 'http://localhost:3001',
         description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server'
       }
@@ -98,6 +119,7 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // File upload configuration
+console.log('📤 Setting up file upload configuration...');
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -129,9 +151,12 @@ const authenticateUser = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    console.error('Authentication error:', error);
     res.status(401).json({ error: 'Authentication failed' });
   }
 };
+
+console.log('🛣️ Setting up API routes...');
 
 /**
  * @swagger
@@ -158,10 +183,13 @@ const authenticateUser = async (req, res, next) => {
  *                   example: "1.0.0"
  */
 app.get('/api/health', (req, res) => {
+  console.log('🏥 Health check requested');
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    port: PORT
   });
 });
 
@@ -490,11 +518,18 @@ app.get('/api/user/profile', authenticateUser, async (req, res) => {
 
 // Serve React app for all other routes in production
 if (process.env.NODE_ENV === 'production') {
+  console.log('🌐 Setting up React app serving for production...');
   app.get('*', (req, res) => {
     const indexPath = path.join(__dirname, 'dist', 'index.html');
-    console.log('Serving index.html from:', indexPath);
-    console.log('Index.html exists:', require('fs').existsSync(indexPath));
-    res.sendFile(indexPath);
+    console.log('📄 Serving index.html from:', indexPath);
+    console.log('📄 Index.html exists:', fs.existsSync(indexPath));
+    
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      console.error('❌ index.html not found at:', indexPath);
+      res.status(404).send('Frontend files not found. Please ensure the build was successful.');
+    }
   });
 }
 
@@ -589,18 +624,21 @@ app.use((error, req, res, next) => {
 });
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
 const HOST = '0.0.0.0';
 
+console.log('🚀 Starting server...');
 app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on ${HOST}:${PORT}`);
   console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
+  console.log(`📚 API Docs: http://${HOST}:${PORT}/api-docs`);
   console.log(`📁 Working Directory: ${__dirname}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
   console.log(`📊 Supabase URL: ${supabaseUrl ? 'Configured' : 'Missing'}`);
+  console.log('✅ Server startup complete!');
 });
 
 export default app;

@@ -29,35 +29,35 @@ export class OCRService {
    * Main OCR extraction method with robust fallback chain
    */
   static async extractText(file: File): Promise<string> {
-    console.log(`[OCR] Starting extraction for file: ${file.name} (${file.type})`);
+    console.log(`📄 [OCR] Starting extraction for file: ${file.name} (${file.type})`);
     
     try {
       // Step 1: Try primary OCR with Tesseract.js
       const primaryResult = await this.extractWithTesseract(file);
       if (primaryResult.success && primaryResult.text.trim().length > 10) {
-        console.log(`[OCR] Tesseract success: ${primaryResult.text.length} characters extracted`);
+        console.log(`📄 [OCR] Tesseract success: ${primaryResult.text.length} characters extracted`);
         return primaryResult.text;
       }
       
-      console.warn(`[OCR] Tesseract failed or low quality result, trying fallback...`);
+      console.warn(`📄 [OCR] Tesseract failed or low quality result, trying fallback...`);
       
       // Step 2: Try fallback OCR with OCR.Space API
       if (this.OCR_SPACE_API_KEY) {
         const fallbackResult = await this.extractWithOCRSpace(file);
         if (fallbackResult.success && fallbackResult.text.trim().length > 5) {
-          console.log(`[OCR] OCR.Space fallback success: ${fallbackResult.text.length} characters extracted`);
+          console.log(`📄 [OCR] OCR.Space fallback success: ${fallbackResult.text.length} characters extracted`);
           return fallbackResult.text;
         }
       } else {
-        console.warn(`[OCR] OCR.Space API key not configured, skipping fallback`);
+        console.warn(`📄 [OCR] OCR.Space API key not configured, skipping fallback`);
       }
       
       // Step 3: Return mock text to prevent pipeline crash
-      console.warn(`[OCR] All OCR methods failed, returning mock text`);
+      console.warn(`📄 [OCR] All OCR methods failed, returning mock text`);
       return this.getMockOCRText(file.name);
       
     } catch (error) {
-      console.error(`[OCR] Unexpected error during extraction:`, error);
+      console.error(`📄 [OCR] Unexpected error during extraction:`, error);
       return this.getMockOCRText(file.name);
     }
   }
@@ -70,18 +70,18 @@ export class OCRService {
       let imageSource: string | HTMLCanvasElement;
       
       if (file.type === 'application/pdf') {
-        console.log(`[OCR] Converting PDF to image for Tesseract processing...`);
+        console.log(`📄 [OCR] Converting PDF to image for Tesseract processing...`);
         imageSource = await this.convertPDFToCanvas(file);
       } else {
         // For images, create object URL
         imageSource = URL.createObjectURL(file);
       }
 
-      console.log(`[OCR] Running Tesseract.js OCR...`);
+      console.log(`📄 [OCR] Running Tesseract.js OCR...`);
       const result = await Tesseract.recognize(imageSource, 'eng', {
         logger: (m) => {
           if (m.status === 'recognizing text') {
-            console.log(`[OCR] Tesseract progress: ${Math.round(m.progress * 100)}%`);
+            console.log(`📄 [OCR] Tesseract progress: ${Math.round(m.progress * 100)}%`);
           }
         }
       });
@@ -94,7 +94,7 @@ export class OCRService {
       const extractedText = result.data.text?.trim() || '';
       const confidence = result.data.confidence || 0;
       
-      console.log(`[OCR] Tesseract completed - Confidence: ${confidence}%, Text length: ${extractedText.length}`);
+      console.log(`📄 [OCR] Tesseract completed - Confidence: ${confidence}%, Text length: ${extractedText.length}`);
       
       return {
         success: extractedText.length > 0 && confidence > 30, // Minimum confidence threshold
@@ -103,7 +103,7 @@ export class OCRService {
       };
       
     } catch (error) {
-      console.error(`[OCR] Tesseract.js failed:`, error);
+      console.error(`📄 [OCR] Tesseract.js failed:`, error);
       return { success: false, text: '' };
     }
   }
@@ -117,7 +117,7 @@ export class OCRService {
       const loadingTask = getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
       
-      console.log(`[OCR] PDF loaded, ${pdf.numPages} pages found`);
+      console.log(`📄 [OCR] PDF loaded, ${pdf.numPages} pages found`);
       
       const page = await pdf.getPage(1); // Get first page
       const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better OCR
@@ -137,11 +137,11 @@ export class OCRService {
         viewport: viewport
       }).promise;
       
-      console.log(`[OCR] PDF converted to canvas: ${canvas.width}x${canvas.height}`);
+      console.log(`📄 [OCR] PDF converted to canvas: ${canvas.width}x${canvas.height}`);
       return canvas;
       
     } catch (error) {
-      console.error(`[OCR] PDF conversion failed:`, error);
+      console.error(`📄 [OCR] PDF conversion failed:`, error);
       throw new Error(`Failed to convert PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -151,7 +151,7 @@ export class OCRService {
    */
   private static async extractWithOCRSpace(file: File): Promise<{ success: boolean; text: string }> {
     try {
-      console.log(`[OCR] Attempting OCR.Space API fallback...`);
+      console.log(`📄 [OCR] Attempting OCR.Space API fallback...`);
       
       // Convert file to base64 for API
       const base64 = await this.fileToBase64(file);
@@ -192,7 +192,7 @@ export class OCRService {
 
       const extractedText = result.ParsedResults?.[0]?.ParsedText?.trim() || '';
       
-      console.log(`[OCR] OCR.Space completed - Text length: ${extractedText.length}`);
+      console.log(`📄 [OCR] OCR.Space completed - Text length: ${extractedText.length}`);
       
       return {
         success: extractedText.length > 0,
@@ -200,7 +200,7 @@ export class OCRService {
       };
       
     } catch (error) {
-      console.error(`[OCR] OCR.Space API failed:`, error);
+      console.error(`📄 [OCR] OCR.Space API failed:`, error);
       return { success: false, text: '' };
     }
   }
@@ -248,7 +248,7 @@ export class OCRService {
     ];
     
     const selectedMock = mockTexts[Math.floor(Math.random() * mockTexts.length)];
-    console.log(`[OCR] Generated mock OCR text (${selectedMock.length} characters)`);
+    console.log(`📄 [OCR] Generated mock OCR text (${selectedMock.length} characters)`);
     return selectedMock;
   }
 
@@ -308,7 +308,7 @@ export class OCRService {
       };
       
     } catch (error) {
-      console.error(`[OCR] extractTextWithMetadata failed:`, error);
+      console.error(`📄 [OCR] extractTextWithMetadata failed:`, error);
       return {
         text: this.getMockOCRText(file.name),
         confidence: 0.1,
@@ -317,7 +317,7 @@ export class OCRService {
       };
     } finally {
       const duration = Date.now() - startTime;
-      console.log(`[OCR] Total extraction time: ${duration}ms`);
+      console.log(`📄 [OCR] Total extraction time: ${duration}ms`);
     }
   }
 }
