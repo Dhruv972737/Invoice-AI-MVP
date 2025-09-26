@@ -11,9 +11,7 @@ export default defineConfig({
     strictPort: true
   },
   resolve: {
-    alias: {
-      'pdfjs-dist/build/pdf.worker.mjs': 'pdfjs-dist/build/pdf.worker.mjs'
-    }
+    alias: {}
   },
   build: {
     outDir: 'dist',
