@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Invoice AI Platform
 
 A comprehensive AI-powered invoice processing platform built with React, TypeScript, Supabase, and Google Gemini AI. Features real OCR extraction with Tesseract.js, advanced fraud detection, tax compliance, and intelligent chatbot assistance.
@@ -22,6 +21,7 @@ A comprehensive AI-powered invoice processing platform built with React, TypeScr
 - **Authentication**: Supabase Auth
 - **Storage**: Supabase Storage
 - **Deployment**: Railway
+- **Alternative Hosting**: Render, Vercel, Netlify Functions
 
 ## 📦 Quick Start
 
@@ -90,7 +90,7 @@ npm start
 
 ## 🚀 Deployment
 
-### Deployment (Netlify)
+### Frontend Deployment (Netlify)
 
 1. **Push to GitHub:**
 ```bash
@@ -111,6 +111,24 @@ VITE_SUPABASE_URL=your-supabase-url
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_GEMINI_API_KEY=your-gemini-key
 ```
+
+### Backend Deployment (Render)
+
+1. **Go to [render.com](https://render.com)**
+2. **Connect GitHub repository**
+3. **Create Web Service**:
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+   - Health Check Path: `/api/health`
+4. **Add Environment Variables**:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `NODE_ENV=production`
+   - `FRONTEND_URL=https://invoice-ai-mvp.netlify.app`
+
+### Alternative: Railway (Current)
+
+If you want to keep Railway, the current setup should work with the fixes.
 
 
 ## 📁 Project Structure
@@ -176,8 +194,3 @@ VITE_GEMINI_API_KEY=your-gemini-key
 - **Google AI Studio**: [makersuite.google.com](https://makersuite.google.com)
 
 ---
-
-=======
-# Invoice-AI-MVP
-AI-powered invoice processing platform with OCR, fraud detection and chatbot.
->>>>>>> 6b40315181b5eb9c68b209df2207d723cf3e1afa
