@@ -7,10 +7,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "node server.js",
-    "server": "node server.js",
-    "render-build": "npm install --production",
-    "render-start": "node server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
