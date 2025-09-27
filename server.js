@@ -9,7 +9,6 @@ import { createClient } from '@supabase/supabase-js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -21,39 +20,40 @@ console.log('🚀 Starting Invoice AI Platform Server...');
 console.log('📁 Working Directory:', __dirname);
 console.log('🌍 Environment:', process.env.NODE_ENV);
 console.log('🔧 Node.js Version:', process.version);
+console.log('🚪 Port:', PORT);
 
-// Supabase configuration
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+// Environment variables check
+const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const frontendUrl = process.env.FRONTEND_URL;
+const nodeEnv = process.env.NODE_ENV;
 
 console.log('🔧 Environment Variables Check:');
 console.log('- SUPABASE_URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
 console.log('- SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? '✅ Set' : '❌ Missing');
-console.log('- FRONTEND_URL:', process.env.FRONTEND_URL ? '✅ Set' : '❌ Missing');
-console.log('- NODE_ENV:', process.env.NODE_ENV || 'development');
-console.log('- PORT:', PORT);
-console.log('- Node.js Version:', process.version);
+console.log('- FRONTEND_URL:', frontendUrl ? '✅ Set' : '❌ Missing');
+console.log('- NODE_ENV:', nodeEnv || 'development');
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Missing required environment variables:');
-  console.error('SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
-  console.error('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'Set' : 'Missing');
-  console.warn('⚠️ Supabase not configured - server will start but some features will be limited');
-}
-
+// Initialize Supabase (optional for basic server functionality)
 let supabase = null;
 if (supabaseUrl && supabaseServiceKey) {
-  console.log('✅ Supabase configuration validated');
-  supabase = createClient(supabaseUrl, supabaseServiceKey);
+  try {
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+    console.log('✅ Supabase client initialized');
+  } catch (error) {
+    console.error('❌ Supabase initialization failed:', error.message);
+  }
 } else {
-  console.warn('⚠️ Supabase client not initialized');
+  console.warn('⚠️ Supabase not configured - some features will be limited');
 }
 
-// Middleware
+// Basic middleware
 console.log('🔧 Setting up middleware...');
+
 app.use(helmet({
   contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: false
 }));
 
 app.use(cors({
@@ -61,82 +61,99 @@ app.use(cors({
     ? [
         'https://invoice-ai-mvp.netlify.app',
         'https://*.netlify.app',
-        process.env.FRONTEND_URL || 'https://invoice-ai-mvp.netlify.app'
-      ]
+        frontendUrl
+      ].filter(Boolean)
     : ['http://localhost:5173', 'http://localhost:3000'],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100,
+  message: { error: 'Too many requests, please try again later' }
 });
 app.use('/api/', limiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Backend-only mode - no static file serving
-console.log('🔧 Backend-only mode: Frontend will be served by Netlify');
+// Request logging
+app.use((req, res, next) => {
+  console.log(`📝 ${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
-// Swagger configuration
-console.log('📚 Setting up API documentation...');
+console.log('🛣️ Setting up routes...');
+
+// Health check endpoint - MUST be first
+app.get('/api/health', (req, res) => {
+  console.log('🏥 Health check requested');
+  
+  const healthData = {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    port: PORT,
+    server: {
+      uptime: Math.floor(process.uptime()),
+      memory: process.memoryUsage(),
+      nodeVersion: process.version
+    },
+    database: {
+      supabase: supabase ? 'connected' : 'not configured'
+    },
+    environment_variables: {
+      SUPABASE_URL: !!supabaseUrl,
+      SUPABASE_SERVICE_ROLE_KEY: !!supabaseServiceKey,
+      FRONTEND_URL: !!frontendUrl,
+      NODE_ENV: nodeEnv || 'development'
+    }
+  };
+  
+  console.log('✅ Health check response:', JSON.stringify(healthData, null, 2));
+  res.json(healthData);
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  console.log('📄 Root endpoint accessed');
+  res.json({
+    message: 'Invoice AI Backend API',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/api/health',
+      docs: '/api-docs'
+    },
+    frontend: frontendUrl || 'https://invoice-ai-mvp.netlify.app'
+  });
+});
+
+// Swagger documentation
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: 'Invoice AI Platform API',
       version: '1.0.0',
-      description: 'API for the Invoice AI Platform - handles invoice processing, AI analysis, and data management',
-      contact: {
-        name: 'API Support',
-        email: 'support@invoiceai.com'
-      }
+      description: 'API for the Invoice AI Platform'
     },
     servers: [
       {
         url: 'https://invoice-ai-mvp-production.up.railway.app/api',
-        description: 'Invoice AI Platform API Server'
-      }
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
-      }
-    },
-    security: [
-      {
-        bearerAuth: []
+        description: 'Production API Server'
       }
     ]
   },
-  apis: ['./server.js'], // Path to the API docs
+  apis: ['./server.js']
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-// File upload configuration
-console.log('📤 Setting up file upload configuration...');
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only PDF and images are allowed.'));
-    }
-  }
-});
 
 // Authentication middleware
 const authenticateUser = async (req, res, next) => {
@@ -163,120 +180,17 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
-console.log('🛣️ Setting up API routes...');
-
-/**
- * @swagger
- * /api/health:
- *   get:
- *     summary: Health check endpoint
- *     tags: [System]
- *     responses:
- *       200:
- *         description: Server is healthy
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: "healthy"
- *                 timestamp:
- *                   type: string
- *                   format: date-time
- *                 version:
- *                   type: string
- *                   example: "1.0.0"
- */
-app.get('/api/health', (req, res) => {
-  console.log('🏥 Health check requested from:', req.ip);
-  
-  // Test environment variables
-  const envCheck = {
-    supabaseUrl: !!supabaseUrl,
-    supabaseServiceKey: !!supabaseServiceKey,
-    frontendUrl: !!process.env.FRONTEND_URL,
-    nodeEnv: process.env.NODE_ENV
-  };
-  
-  console.log('🔧 Environment check:', envCheck);
-  
-  res.json({
-    status: 'healthy',
+// API Routes
+app.get('/api/test', (req, res) => {
+  console.log('🧪 Test endpoint accessed');
+  res.json({ 
+    message: 'API is working!', 
     timestamp: new Date().toISOString(),
-    version: '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
-    port: PORT,
-    mode: 'backend-only',
-    envCheck,
-    server: {
-      uptime: process.uptime(),
-      memory: process.memoryUsage(),
-      nodeVersion: process.version
-    },
-    supabase: {
-      configured: !!supabase,
-      url: supabaseUrl ? 'Set' : 'Missing'
-    },
-    railway: {
-      requestId: req.headers['x-request-id'] || 'unknown',
-      deployment: 'active'
-    }
+    environment: process.env.NODE_ENV
   });
 });
 
-/**
- * @swagger
- * /api/invoices:
- *   get:
- *     summary: Get user's invoices
- *     tags: [Invoices]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 100
- *           default: 50
- *         description: Number of invoices to return
- *       - in: query
- *         name: offset
- *         schema:
- *           type: integer
- *           minimum: 0
- *           default: 0
- *         description: Number of invoices to skip
- *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *           enum: [processing, completed, failed]
- *         description: Filter by invoice status
- *     responses:
- *       200:
- *         description: List of invoices
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 invoices:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Invoice'
- *                 total:
- *                   type: integer
- *                 limit:
- *                   type: integer
- *                 offset:
- *                   type: integer
- *       401:
- *         description: Unauthorized
- */
+// Protected routes (require authentication)
 app.get('/api/invoices', authenticateUser, async (req, res) => {
   try {
     const { limit = 50, offset = 0, status } = req.query;
@@ -308,183 +222,8 @@ app.get('/api/invoices', authenticateUser, async (req, res) => {
   }
 });
 
-/**
- * @swagger
- * /api/invoices/{id}:
- *   get:
- *     summary: Get a specific invoice
- *     tags: [Invoices]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Invoice ID
- *     responses:
- *       200:
- *         description: Invoice details
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Invoice'
- *       404:
- *         description: Invoice not found
- *       401:
- *         description: Unauthorized
- */
-app.get('/api/invoices/:id', authenticateUser, async (req, res) => {
-  try {
-    if (!supabase) {
-      return res.status(503).json({ error: 'Database not configured' });
-    }
-    
-    const { id } = req.params;
-    
-    const { data: invoice, error } = await supabase
-      .from('invoices')
-      .select('*')
-      .eq('id', id)
-      .eq('user_id', req.user.id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return res.status(404).json({ error: 'Invoice not found' });
-      }
-      throw error;
-    }
-
-    res.json(invoice);
-  } catch (error) {
-    console.error('Error fetching invoice:', error);
-    res.status(500).json({ error: 'Failed to fetch invoice' });
-  }
-});
-
-/**
- * @swagger
- * /api/invoices/{id}:
- *   delete:
- *     summary: Delete an invoice
- *     tags: [Invoices]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Invoice ID
- *     responses:
- *       200:
- *         description: Invoice deleted successfully
- *       404:
- *         description: Invoice not found
- *       401:
- *         description: Unauthorized
- */
-app.delete('/api/invoices/:id', authenticateUser, async (req, res) => {
-  try {
-    if (!supabase) {
-      return res.status(503).json({ error: 'Database not configured' });
-    }
-    
-    const { id } = req.params;
-    
-    // First check if invoice exists and belongs to user
-    const { data: invoice, error: fetchError } = await supabase
-      .from('invoices')
-      .select('file_url')
-      .eq('id', id)
-      .eq('user_id', req.user.id)
-      .single();
-
-    if (fetchError) {
-      if (fetchError.code === 'PGRST116') {
-        return res.status(404).json({ error: 'Invoice not found' });
-      }
-      throw fetchError;
-    }
-
-    // Delete from database
-    const { error: deleteError } = await supabase
-      .from('invoices')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', req.user.id);
-
-    if (deleteError) throw deleteError;
-
-    // Delete file from storage if exists
-    if (invoice.file_url) {
-      try {
-        const filePath = invoice.file_url.split('/').pop();
-        await supabase.storage
-          .from('invoices')
-          .remove([`${req.user.id}/${filePath}`]);
-      } catch (storageError) {
-        console.error('Error deleting file from storage:', storageError);
-        // Don't fail the request if storage deletion fails
-      }
-    }
-
-    res.json({ message: 'Invoice deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting invoice:', error);
-    res.status(500).json({ error: 'Failed to delete invoice' });
-  }
-});
-
-/**
- * @swagger
- * /api/analytics/dashboard:
- *   get:
- *     summary: Get dashboard analytics
- *     tags: [Analytics]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Dashboard analytics data
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 totalInvoices:
- *                   type: integer
- *                 totalAmount:
- *                   type: number
- *                 averageAmount:
- *                   type: number
- *                 highRiskCount:
- *                   type: integer
- *                 monthlyTrends:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       month:
- *                         type: string
- *                       amount:
- *                         type: number
- *                       count:
- *                         type: integer
- *       401:
- *         description: Unauthorized
- */
 app.get('/api/analytics/dashboard', authenticateUser, async (req, res) => {
   try {
-    if (!supabase) {
-      return res.status(503).json({ error: 'Database not configured' });
-    }
-    
     const { data: invoices, error } = await supabase
       .from('invoices')
       .select('*')
@@ -497,28 +236,11 @@ app.get('/api/analytics/dashboard', authenticateUser, async (req, res) => {
     const averageAmount = totalInvoices > 0 ? totalAmount / totalInvoices : 0;
     const highRiskCount = invoices.filter(inv => inv.fraud_risk === 'high').length;
 
-    // Calculate monthly trends
-    const monthlyData = {};
-    invoices.forEach(inv => {
-      const month = new Date(inv.created_at).toISOString().slice(0, 7);
-      if (!monthlyData[month]) {
-        monthlyData[month] = { amount: 0, count: 0 };
-      }
-      monthlyData[month].amount += inv.amount || 0;
-      monthlyData[month].count++;
-    });
-
-    const monthlyTrends = Object.entries(monthlyData)
-      .sort()
-      .slice(-12)
-      .map(([month, data]) => ({ month, ...data }));
-
     res.json({
       totalInvoices,
       totalAmount,
       averageAmount,
-      highRiskCount,
-      monthlyTrends
+      highRiskCount
     });
   } catch (error) {
     console.error('Error fetching analytics:', error);
@@ -526,164 +248,47 @@ app.get('/api/analytics/dashboard', authenticateUser, async (req, res) => {
   }
 });
 
-/**
- * @swagger
- * /api/user/profile:
- *   get:
- *     summary: Get user profile
- *     tags: [User]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: User profile data
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Profile'
- *       401:
- *         description: Unauthorized
- */
-app.get('/api/user/profile', authenticateUser, async (req, res) => {
-  try {
-    if (!supabase) {
-      return res.status(503).json({ error: 'Database not configured' });
-    }
-    
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', req.user.id)
-      .single();
-
-    if (error) throw error;
-
-    res.json(profile);
-  } catch (error) {
-    console.error('Error fetching profile:', error);
-    res.status(500).json({ error: 'Failed to fetch profile' });
-  }
+// Catch-all for undefined API routes
+app.use('/api/*', (req, res) => {
+  console.log('❌ API 404:', req.method, req.path);
+  res.status(404).json({ 
+    error: 'API endpoint not found',
+    path: req.path,
+    method: req.method,
+    available_endpoints: ['/api/health', '/api/test', '/api-docs']
+  });
 });
 
-// Backend-only: No frontend serving needed
-// Frontend will be served by Netlify
+// Catch-all for non-API routes
 app.get('*', (req, res) => {
-  // Only handle non-API routes with a simple message
-  if (!req.path.startsWith('/api/')) {
-    console.log('📄 Non-API request:', req.method, req.path);
-    res.status(200).json({
-      message: 'Invoice AI Backend API',
-      status: 'running',
-      frontend: 'https://invoice-ai-mvp.netlify.app',
+  console.log('📄 Catch-all route:', req.method, req.path);
+  res.json({
+    message: 'Invoice AI Backend API',
+    status: 'running',
+    path: req.path,
+    frontend: frontendUrl || 'https://invoice-ai-mvp.netlify.app',
+    api_endpoints: {
       health: '/api/health',
-      docs: '/api-docs',
-      timestamp: new Date().toISOString()
-    });
-  } else {
-    console.log('❌ API 404:', req.method, req.path);
-    res.status(404).json({ error: 'API endpoint not found' });
-  }
+      test: '/api/test',
+      docs: '/api-docs'
+    }
+  });
 });
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     Invoice:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *           format: uuid
- *         user_id:
- *           type: string
- *           format: uuid
- *         file_name:
- *           type: string
- *         file_url:
- *           type: string
- *         status:
- *           type: string
- *           enum: [processing, completed, failed]
- *         vendor_name:
- *           type: string
- *         invoice_date:
- *           type: string
- *           format: date
- *         amount:
- *           type: number
- *         currency:
- *           type: string
- *         tax_id:
- *           type: string
- *         language:
- *           type: string
- *         classification:
- *           type: string
- *           enum: [service, product, recurring]
- *         fraud_risk:
- *           type: string
- *           enum: [low, medium, high]
- *         tax_region:
- *           type: string
- *         vat_amount:
- *           type: number
- *         processed_data:
- *           type: object
- *         created_at:
- *           type: string
- *           format: date-time
- *         updated_at:
- *           type: string
- *           format: date-time
- *     Profile:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *           format: uuid
- *         email:
- *           type: string
- *           format: email
- *         full_name:
- *           type: string
- *         avatar_url:
- *           type: string
- *         provider:
- *           type: string
- *         created_at:
- *           type: string
- *           format: date-time
- *         updated_at:
- *           type: string
- *           format: date-time
- */
 
 // Error handling middleware
 app.use((error, req, res, next) => {
   console.error('❌ Unhandled error:', error);
-  console.error('Request path:', req.path);
-  console.error('Request method:', req.method);
-  
-  if (error instanceof multer.MulterError) {
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
-    }
-  }
+  console.error('Request:', req.method, req.path);
   
   res.status(500).json({ 
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
-    path: req.path
+    path: req.path,
+    timestamp: new Date().toISOString()
   });
 });
 
-// 404 handler
-app.use('/api/*', (req, res, next) => {
-  console.log('❌ API 404:', req.method, req.path);
-  res.status(404).json({ error: 'Endpoint not found' });
-});
-
+// Start server
 const HOST = '0.0.0.0';
 
 console.log('🚀 Starting server...');
@@ -691,20 +296,12 @@ console.log('🚀 Starting server...');
 const server = app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on ${HOST}:${PORT}`);
   console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
+  console.log(`🧪 Test Endpoint: http://${HOST}:${PORT}/api/test`);
   console.log(`📚 API Docs: http://${HOST}:${PORT}/api-docs`);
-  console.log(`📁 Working Directory: ${__dirname}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔧 Node.js Version: ${process.version}`);
   console.log(`📊 Supabase: ${supabase ? '✅ Connected' : '⚠️ Not configured'}`);
-  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'Not set'}`);
-  
   console.log('✅ Server startup complete!');
-  
-  // Additional health check logging for Railway
-  console.log(`🏥 Railway Health Check URL: https://invoice-ai-mvp-production.up.railway.app/api/health`);
-  console.log(`🏥 Health endpoint ready for Railway healthcheck`);
-  console.log(`🌐 Backend API running at: https://invoice-ai-mvp-production.up.railway.app`);
-  console.log(`📚 API Documentation: https://invoice-ai-mvp-production.up.railway.app/api-docs`);
 });
 
 // Graceful shutdown
@@ -722,6 +319,17 @@ process.on('SIGINT', () => {
     console.log('✅ Server closed');
     process.exit(0);
   });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });
 
 export default app;
