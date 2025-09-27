@@ -38,12 +38,18 @@ if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing required environment variables:');
   console.error('SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
   console.error('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'Set' : 'Missing');
-  console.error('Please check your Railway environment variables configuration.');
-  process.exit(1);
+  console.warn('⚠️ Supabase not configured - some features will be limited');
+  console.warn('Please check your Railway environment variables configuration.');
+  // Don't exit - let server start for health checks
 }
 
-console.log('✅ Supabase configuration validated');
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+let supabase = null;
+if (supabaseUrl && supabaseServiceKey) {
+  console.log('✅ Supabase configuration validated');
+  supabase = createClient(supabaseUrl, supabaseServiceKey);
+} else {
+  console.warn('⚠️ Supabase client not initialized');
+}
 
 // Middleware
 console.log('🔧 Setting up middleware...');
@@ -133,6 +139,10 @@ const upload = multer({
 // Authentication middleware
 const authenticateUser = async (req, res, next) => {
   try {
+    if (!supabase) {
+      return res.status(503).json({ error: 'Database not configured' });
+    }
+    
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) {
       return res.status(401).json({ error: 'No token provided' });
@@ -180,43 +190,25 @@ console.log('🛣️ Setting up API routes...');
 app.get('/api/health', (req, res) => {
   console.log('🏥 Health check requested from:', req.ip);
   
-  // Check frontend files
-  const distPath = path.join(__dirname, 'dist');
-  const indexPath = path.join(distPath, 'index.html');
-  const distExists = fs.existsSync(distPath);
-  const indexExists = fs.existsSync(indexPath);
-  
-  let distFiles = [];
-  if (distExists) {
-    try {
-      distFiles = fs.readdirSync(distPath).slice(0, 10); // First 10 files
-    } catch (err) {
-      console.error('Error reading dist directory:', err);
-    }
-  }
-  
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
     port: PORT,
+    mode: 'backend-only',
     server: {
       uptime: process.uptime(),
       memory: process.memoryUsage(),
       nodeVersion: process.version
     },
-    frontend: {
-      distExists,
-      indexExists,
-      distPath,
-      indexPath,
-      distFiles: distFiles.length > 0 ? distFiles : 'No files found',
-      staticMiddleware: process.env.NODE_ENV === 'production' ? 'enabled' : 'disabled'
-    },
     supabase: {
-      configured: !!(supabaseUrl && supabaseServiceKey),
+      configured: !!supabase,
       url: supabaseUrl ? 'Set' : 'Missing'
+    },
+    railway: {
+      requestId: req.headers['x-request-id'] || 'unknown',
+      deployment: 'active'
     }
   });
 });
@@ -333,6 +325,10 @@ app.get('/api/invoices', authenticateUser, async (req, res) => {
  */
 app.get('/api/invoices/:id', authenticateUser, async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(503).json({ error: 'Database not configured' });
+    }
+    
     const { id } = req.params;
     
     const { data: invoice, error } = await supabase
@@ -382,6 +378,10 @@ app.get('/api/invoices/:id', authenticateUser, async (req, res) => {
  */
 app.delete('/api/invoices/:id', authenticateUser, async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(503).json({ error: 'Database not configured' });
+    }
+    
     const { id } = req.params;
     
     // First check if invoice exists and belongs to user
@@ -468,6 +468,10 @@ app.delete('/api/invoices/:id', authenticateUser, async (req, res) => {
  */
 app.get('/api/analytics/dashboard', authenticateUser, async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(503).json({ error: 'Database not configured' });
+    }
+    
     const { data: invoices, error } = await supabase
       .from('invoices')
       .select('*')
@@ -529,6 +533,10 @@ app.get('/api/analytics/dashboard', authenticateUser, async (req, res) => {
  */
 app.get('/api/user/profile', authenticateUser, async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(503).json({ error: 'Database not configured' });
+    }
+    
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
@@ -549,13 +557,17 @@ app.get('/api/user/profile', authenticateUser, async (req, res) => {
 app.get('*', (req, res) => {
   // Only handle non-API routes with a simple message
   if (!req.path.startsWith('/api/')) {
+    console.log('📄 Non-API request:', req.method, req.path);
     res.status(200).json({
       message: 'Invoice AI Backend API',
+      status: 'running',
       frontend: 'https://invoice-ai-mvp.netlify.app',
       health: '/api/health',
-      docs: '/api-docs'
+      docs: '/api-docs',
+      timestamp: new Date().toISOString()
     });
   } else {
+    console.log('❌ API 404:', req.method, req.path);
     res.status(404).json({ error: 'API endpoint not found' });
   }
 });
@@ -662,45 +674,40 @@ app.use('/api/*', (req, res, next) => {
 const HOST = '0.0.0.0';
 
 console.log('🚀 Starting server...');
-app.listen(PORT, HOST, () => {
+
+const server = app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on ${HOST}:${PORT}`);
   console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
   console.log(`📚 API Docs: http://${HOST}:${PORT}/api-docs`);
   console.log(`📁 Working Directory: ${__dirname}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔧 Node.js Version: ${process.version}`);
-  console.log(`📊 Supabase URL: ${supabaseUrl ? 'Configured' : 'Missing'}`);
-  
-  // Additional diagnostics
-  const distPath = path.join(__dirname, 'dist');
-  const indexPath = path.join(distPath, 'index.html');
-  console.log(`📁 Frontend files check:`);
-  console.log(`   - Dist directory: ${fs.existsSync(distPath) ? '✅' : '❌'}`);
-  console.log(`   - Index.html: ${fs.existsSync(indexPath) ? '✅' : '❌'}`);
-  
-  if (fs.existsSync(distPath)) {
-    try {
-      const files = fs.readdirSync(distPath);
-      console.log(`   - Files in dist: ${files.length} files`);
-      console.log(`   - Sample files: ${files.slice(0, 5).join(', ')}`);
-      
-      // Check for essential files
-      const hasJS = files.some(f => f.endsWith('.js'));
-      const hasCSS = files.some(f => f.endsWith('.css'));
-      console.log(`   - JavaScript files: ${hasJS ? '✅' : '❌'}`);
-      console.log(`   - CSS files: ${hasCSS ? '✅' : '❌'}`);
-    } catch (err) {
-      console.error(`   - Error reading dist directory: ${err.message}`);
-    }
-  }
+  console.log(`📊 Supabase: ${supabase ? '✅ Connected' : '⚠️ Not configured'}`);
   
   console.log('✅ Server startup complete!');
   
   // Additional health check logging for Railway
   console.log(`🏥 Railway Health Check URL: https://invoice-ai-mvp-production.up.railway.app/api/health`);
   console.log(`🏥 Health endpoint ready for Railway healthcheck`);
-  console.log(`🌐 Frontend should be available at: https://invoice-ai-mvp-production.up.railway.app`);
+  console.log(`🌐 Backend API running at: https://invoice-ai-mvp-production.up.railway.app`);
   console.log(`📚 API Documentation: https://invoice-ai-mvp-production.up.railway.app/api-docs`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT received, shutting down gracefully');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });
 
 export default app;
