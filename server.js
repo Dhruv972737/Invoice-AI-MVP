@@ -15,13 +15,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 console.log('🚀 Starting Invoice AI Platform Server...');
 console.log('📁 Working Directory:', __dirname);
 console.log('🌍 Environment:', process.env.NODE_ENV);
 console.log('🔧 Node.js Version:', process.version);
-console.log('📦 NPM Version:', process.env.npm_version || 'Unknown');
 
 // Supabase configuration
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -30,6 +29,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 console.log('🔧 Environment Variables Check:');
 console.log('- SUPABASE_URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
 console.log('- SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? '✅ Set' : '❌ Missing');
+console.log('- FRONTEND_URL:', process.env.FRONTEND_URL ? '✅ Set' : '❌ Missing');
 console.log('- NODE_ENV:', process.env.NODE_ENV || 'development');
 console.log('- PORT:', PORT);
 console.log('- Node.js Version:', process.version);
@@ -38,9 +38,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing required environment variables:');
   console.error('SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
   console.error('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'Set' : 'Missing');
-  console.warn('⚠️ Supabase not configured - some features will be limited');
-  console.warn('Please check your Railway environment variables configuration.');
-  // Don't exit - let server start for health checks
+  console.warn('⚠️ Supabase not configured - server will start but some features will be limited');
 }
 
 let supabase = null;
@@ -53,7 +51,11 @@ if (supabaseUrl && supabaseServiceKey) {
 
 // Middleware
 console.log('🔧 Setting up middleware...');
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
+
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
@@ -190,6 +192,16 @@ console.log('🛣️ Setting up API routes...');
 app.get('/api/health', (req, res) => {
   console.log('🏥 Health check requested from:', req.ip);
   
+  // Test environment variables
+  const envCheck = {
+    supabaseUrl: !!supabaseUrl,
+    supabaseServiceKey: !!supabaseServiceKey,
+    frontendUrl: !!process.env.FRONTEND_URL,
+    nodeEnv: process.env.NODE_ENV
+  };
+  
+  console.log('🔧 Environment check:', envCheck);
+  
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
@@ -197,6 +209,7 @@ app.get('/api/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development',
     port: PORT,
     mode: 'backend-only',
+    envCheck,
     server: {
       uptime: process.uptime(),
       memory: process.memoryUsage(),
@@ -683,6 +696,7 @@ const server = app.listen(PORT, HOST, () => {
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔧 Node.js Version: ${process.version}`);
   console.log(`📊 Supabase: ${supabase ? '✅ Connected' : '⚠️ Not configured'}`);
+  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'Not set'}`);
   
   console.log('✅ Server startup complete!');
   
