@@ -3,12 +3,12 @@ import cors from 'cors';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const HOST = '0.0.0.0'; // Critical for Railway!
+const HOST = '0.0.0.0'; // Critical for all hosting platforms!
 
 console.log('🚀 Starting ES Module server...');
 console.log('📍 Port:', PORT);
 console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
-console.log('🚂 Railway PORT:', process.env.PORT || 'NOT SET');
+console.log('🎯 Assigned PORT:', process.env.PORT || 'NOT SET');
 
 // Validate environment variables
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -70,7 +70,7 @@ app.get('/api/health', (req, res) => {
     port: PORT,
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    railway_port: process.env.PORT,
+    assigned_port: process.env.PORT,
     supabase_url: supabaseUrl ? 'configured' : 'missing',
     service_key: supabaseServiceKey ? 'configured' : 'missing'
   });
@@ -89,11 +89,10 @@ app.get('/api/test', (req, res) => {
       'x-forwarded-for': req.get('X-Forwarded-For')
     },
     query: req.query,
-    railway_info: {
+    hosting_info: {
       port: process.env.PORT,
-      environment: process.env.RAILWAY_ENVIRONMENT,
-      service: process.env.RAILWAY_SERVICE_NAME,
-      deployment: process.env.RAILWAY_DEPLOYMENT_ID
+      environment: process.env.NODE_ENV,
+      platform: 'render'
     }
   });
 });
@@ -146,13 +145,12 @@ const startServer = () => {
   try {
     const server = app.listen(PORT, HOST, () => {
       console.log(`✅ ES Module Server running on ${HOST}:${PORT}`);
-      console.log(`🌐 Railway assigned port: ${process.env.PORT || 'NOT ASSIGNED'}`);
+      console.log(`🌐 Platform assigned port: ${process.env.PORT || 'NOT ASSIGNED'}`);
       console.log(`🎯 Server started successfully with Node.js ${process.version}!`);
       console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
       console.log(`📁 Working Directory: ${process.cwd()}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🚂 Railway Service: ${process.env.RAILWAY_SERVICE_NAME || 'Unknown'}`);
-      console.log(`🌎 Railway Environment: ${process.env.RAILWAY_ENVIRONMENT || 'Unknown'}`);
+      console.log(`🎯 Platform: Render`);
     });
 
     server.on('error', (err) => {
