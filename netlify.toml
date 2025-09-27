@@ -15,7 +15,7 @@
 # API proxy to Render backend
 [[redirects]]
   from = "/api/*"
-  to = "https://your-actual-render-url.onrender.com/api/:splat"
+  to = "https://invoice-ai-backend.onrender.com/api/:splat"
   status = 200
   force = true
 
