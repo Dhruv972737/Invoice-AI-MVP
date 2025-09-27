@@ -15,12 +15,9 @@ A comprehensive AI-powered invoice processing platform built with React, TypeScr
 
 ### 🔐 **Test Credentials**
 ```
-Email: demo@invoiceai.com
-Password: Demo123456!
+Email: dhruvsvpatel@gmail.com
+Password: 12345678
 
-Alternative Test Account:
-Email: test@example.com  
-Password: TestUser123!
 ```
 
 ### 📋 **Sample Test Data**
