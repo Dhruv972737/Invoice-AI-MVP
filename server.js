@@ -3,6 +3,8 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -36,6 +38,71 @@ if (!supabaseUrl || !supabaseServiceKey) {
   }
 }
 
+// Swagger configuration
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Invoice AI Platform API',
+      version: '1.0.0',
+      description: 'AI-powered invoice processing platform API',
+      contact: {
+        name: 'Invoice AI Support',
+        email: 'support@invoiceai.com'
+      }
+    },
+    servers: [
+      {
+        url: process.env.NODE_ENV === 'production' 
+          ? 'https://invoice-ai-backend.onrender.com'
+          : `http://localhost:${PORT}`,
+        description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server'
+      }
+    ],
+    components: {
+      schemas: {
+        HealthResponse: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', example: 'healthy' },
+            timestamp: { type: 'string', format: 'date-time' },
+            version: { type: 'string', example: '1.0.0' },
+            platform: { type: 'string', example: 'Render' },
+            uptime: { type: 'number', example: 3600 },
+            memory: {
+              type: 'object',
+              properties: {
+                used: { type: 'number', example: 45 },
+                total: { type: 'number', example: 512 }
+              }
+            }
+          }
+        },
+        ApiResponse: {
+          type: 'object',
+          properties: {
+            message: { type: 'string' },
+            timestamp: { type: 'string', format: 'date-time' },
+            platform: { type: 'string', example: 'Render' }
+          }
+        },
+        ErrorResponse: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            message: { type: 'string' },
+            timestamp: { type: 'string', format: 'date-time' },
+            platform: { type: 'string', example: 'Render' }
+          }
+        }
+      }
+    }
+  },
+  apis: ['./server.js'] // Path to the API docs
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
 // CORS configuration for Render
 app.use(cors({
   origin: [
@@ -62,6 +129,52 @@ app.use((req, res, next) => {
   next();
 });
 
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Invoice AI Platform API',
+  swaggerOptions: {
+    persistAuthorization: true,
+  }
+}));
+
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Root endpoint
+ *     description: Returns basic information about the Invoice AI Platform API
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: API information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invoice AI Backend is running on Render! 🚀"
+ *                 status:
+ *                   type: string
+ *                   example: "healthy"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 platform:
+ *                   type: string
+ *                   example: "Render"
+ *                 endpoints:
+ *                   type: object
+ *                   properties:
+ *                     health:
+ *                       type: string
+ *                       example: "/api/health"
+ *                     test:
+ *                       type: string
+ *                       example: "/api/test"
+ */
 // Root endpoint
 app.get('/', (req, res) => {
   console.log('📄 Root endpoint accessed');
@@ -80,11 +193,27 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/api/health',
       test: '/api/test',
-      root: '/'
+      root: '/',
+      docs: '/api-docs'
     }
   });
 });
 
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Health check endpoint
+ *     description: Returns the health status of the API server
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: Server health information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthResponse'
+ */
 // Health check endpoint for Render
 app.get('/api/health', (req, res) => {
   console.log('🏥 Health check requested by Render');
@@ -108,6 +237,40 @@ app.get('/api/health', (req, res) => {
   res.json(healthData);
 });
 
+/**
+ * @swagger
+ * /api/test:
+ *   get:
+ *     summary: API test endpoint
+ *     description: Tests API functionality and returns system information
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: API test successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Render API is working perfectly! ✅"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 method:
+ *                   type: string
+ *                   example: "GET"
+ *                 platform:
+ *                   type: string
+ *                   example: "Render"
+ *                 headers:
+ *                   type: object
+ *                 query:
+ *                   type: object
+ *                 render_info:
+ *                   type: object
+ */
 // Test endpoint
 app.get('/api/test', (req, res) => {
   console.log('🧪 Test endpoint accessed');
@@ -132,6 +295,36 @@ app.get('/api/test', (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /api:
+ *   get:
+ *     summary: API information
+ *     description: Returns general information about the Invoice AI Platform API
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: API information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                   example: "Invoice AI API"
+ *                 version:
+ *                   type: string
+ *                   example: "1.0.0"
+ *                 platform:
+ *                   type: string
+ *                   example: "Render"
+ *                 endpoints:
+ *                   type: object
+ *                 status:
+ *                   type: string
+ *                   example: "operational"
+ */
 // API info endpoint
 app.get('/api', (req, res) => {
   console.log('ℹ️ API info requested');
@@ -142,11 +335,12 @@ app.get('/api', (req, res) => {
     endpoints: {
       health: '/api/health',
       test: '/api/test',
-      root: '/'
+      root: '/',
+      docs: '/api-docs'
     },
     status: 'operational',
     render_configured: !!process.env.PORT,
-    documentation: 'https://github.com/your-repo/invoice-ai-platform'
+    documentation: 'https://github.com/Dhruv972737/Invoice-AI-MVP'
   });
 });
 
@@ -188,7 +382,8 @@ app.use('/api/*', (req, res) => {
       '/',
       '/api/health',
       '/api/test',
-      '/api'
+      '/api',
+      '/api-docs'
     ],
     platform: 'Render'
   });
@@ -226,6 +421,7 @@ const startServer = () => {
       console.log(`🌐 Render assigned port: ${process.env.PORT || 'NOT ASSIGNED'}`);
       console.log(`🎯 Server started successfully with Node.js ${process.version}!`);
       console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
+      console.log(`📚 API Docs: http://${HOST}:${PORT}/api-docs`);
       console.log(`📁 Working Directory: ${process.cwd()}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🎯 Platform: Render`);
