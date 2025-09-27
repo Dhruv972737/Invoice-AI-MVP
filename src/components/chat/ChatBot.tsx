@@ -292,30 +292,16 @@ export default function ChatBot() {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              AI Invoice Assistant {geminiService ? '(Gemini Pro)' : '(Fallback)'}
+              AI Invoice Assistant
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {geminiService ? 'Powered by Google Gemini AI' : 'Using pattern-based responses'}
+              Powered by Google Gemini AI
             </p>
           </div>
           <div className="flex-1" />
-          <div className="flex items-center space-x-1 px-2 py-1 bg-green-100 dark:bg-green-900/50 rounded-full">
-            <div className={`w-2 h-2 rounded-full animate-pulse ${geminiService ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-            <span className={`text-xs ${geminiService ? 'text-green-700 dark:text-green-300' : 'text-yellow-700 dark:text-yellow-300'}`}>
-              {geminiService ? 'AI Online' : 'Fallback Mode'}
-            </span>
-          </div>
         </div>
       </div>
       
-      {!geminiService && (
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 px-4 py-2 border-x border-yellow-200 dark:border-yellow-800">
-          <p className="text-xs text-yellow-800 dark:text-yellow-200">
-            💡 Configure VITE_GEMINI_API_KEY in your environment to enable full AI capabilities
-          </p>
-        </div>
-      )}
-
       {/* Quick Queries */}
       <div className="bg-white dark:bg-gray-800 px-4 py-3 border-x border-gray-200 dark:border-gray-700">
         <div className="flex items-center mb-2">
