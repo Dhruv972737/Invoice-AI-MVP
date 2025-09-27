@@ -20,8 +20,8 @@ A comprehensive AI-powered invoice processing platform built with React, TypeScr
 - **AI/ML**: Google Gemini AI, Tesseract.js OCR
 - **Authentication**: Supabase Auth
 - **Storage**: Supabase Storage
-- **Deployment**: Railway
-- **Alternative Hosting**: Render, Vercel, Netlify Functions
+- **Deployment**: Render (Backend), Netlify (Frontend)
+- **Alternative Hosting**: Vercel, Railway, Netlify Functions
 
 ## 📦 Quick Start
 
@@ -45,10 +45,10 @@ VITE_SUPABASE_URL=your-supabase-project-url
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 VITE_GEMINI_API_KEY=your-gemini-api-key
 
-# For production deployment
+# Backend Environment Variables (for Render)
 SUPABASE_URL=your-supabase-project-url
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-FRONTEND_URL=https://your-app.railway.app
+FRONTEND_URL=https://invoice-ai-mvp.netlify.app
 NODE_ENV=production
 ```
 
@@ -189,6 +189,7 @@ VITE_GEMINI_API_KEY=your-gemini-key
 
 ## 🔗 Links
 
+- **Render**: [render.com](https://render.com)
 - **Netlify**: [netlify.com](https://netlify.com)
 - **Supabase**: [supabase.com](https://supabase.com)
 - **Google AI Studio**: [makersuite.google.com](https://makersuite.google.com)

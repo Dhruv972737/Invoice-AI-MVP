@@ -3,9 +3,12 @@ services:
     name: invoice-ai-backend
     env: node
     plan: free
-    buildCommand: npm install
+    region: oregon
+    buildCommand: npm install --production
     startCommand: npm start
     healthCheckPath: /api/health
+    autoDeploy: true
+    branch: main
     envVars:
       - key: NODE_ENV
         value: production
@@ -15,3 +18,7 @@ services:
         sync: false
       - key: FRONTEND_URL
         value: https://invoice-ai-mvp.netlify.app
+    disk:
+      name: invoice-ai-disk
+      mountPath: /tmp
+      sizeGB: 1

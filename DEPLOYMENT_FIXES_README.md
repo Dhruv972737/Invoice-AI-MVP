@@ -1,322 +1,222 @@
-# Railway Deployment Fixes - Implementation Guide
+# Render Deployment Guide - Invoice AI Platform
 
-This document provides step-by-step instructions for implementing the fixes needed to resolve Railway deployment issues and refresh token errors.
+This document provides step-by-step instructions for deploying the Invoice AI platform backend to Render.
 
-## Overview of Issues Fixed
+## Overview
 
-1. **Railway Health Check Failures** - Server not starting properly
-2. **Environment Variable Validation** - Missing Supabase configuration checks
-3. **Static File Serving** - Frontend files not served correctly in production
-4. **Refresh Token Errors** - Invalid authentication tokens causing crashes
-5. **Debugging** - Added comprehensive logging for troubleshooting
+We've migrated from Railway to Render for better reliability and easier deployment process.
 
 ---
 
-## File Changes Required
+## 🚀 Render Deployment Steps
 
-### 1. **server.js** - Server Configuration Fixes
+### Step 1: Prepare Repository
 
-#### Location: Root directory (`./server.js`)
-
-**Changes to make:**
-
-#### A. Add Environment Variable Validation (Lines 15-25)
-Replace the existing Supabase configuration section with:
-
-```javascript
-// Supabase configuration
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Missing required environment variables:');
-  console.error('SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
-  console.error('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'Set' : 'Missing');
-  process.exit(1);
-}
+```bash
+# Make sure all changes are committed
+git add .
+git commit -m "Ready for Render deployment"
+git push origin main
 ```
 
-#### B. Enhanced Static File Serving (Around line 60)
-Replace the existing static file serving section with:
+### Step 2: Create Render Account
 
-```javascript
-// Serve static files from dist directory
-if (process.env.NODE_ENV === 'production') {
-  console.log('Production mode: serving static files from dist directory');
-  console.log('Dist directory exists:', require('fs').existsSync(path.join(__dirname, 'dist')));
-  app.use(express.static(path.join(__dirname, 'dist')));
-}
+1. Go to [render.com](https://render.com)
+2. Sign up with GitHub (recommended)
+3. Authorize Render to access your repositories
+
+### Step 3: Create Web Service
+
+1. **Click "New +" → "Web Service"**
+2. **Connect Repository**: Select your `invoice-ai-platform` repository
+3. **Configure Service**:
+   - **Name**: `invoice-ai-backend`
+   - **Environment**: `Node`
+   - **Region**: `Oregon (US West)` (recommended)
+   - **Branch**: `main`
+   - **Build Command**: `npm install --production`
+   - **Start Command**: `npm start`
+
+### Step 4: Configure Health Check
+
+- **Health Check Path**: `/api/health`
+- **Health Check Grace Period**: `300` seconds
+
+### Step 5: Set Environment Variables
+
+Add these environment variables in Render dashboard:
+
+```bash
+NODE_ENV=production
+SUPABASE_URL=your-supabase-project-url
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+FRONTEND_URL=https://invoice-ai-mvp.netlify.app
 ```
 
-#### C. Improved Catch-All Route (Near the end, before error handling)
-Replace the existing catch-all route with:
+**Where to find these values:**
+- `SUPABASE_URL`: Supabase Project Settings → API → Project URL
+- `SUPABASE_SERVICE_ROLE_KEY`: Supabase Project Settings → API → Service Role Key
+- `FRONTEND_URL`: Your Netlify app URL
 
-```javascript
-// Serve React app for all other routes in production
-if (process.env.NODE_ENV === 'production') {
-  app.get('*', (req, res) => {
-    const indexPath = path.join(__dirname, 'dist', 'index.html');
-    console.log('Serving index.html from:', indexPath);
-    console.log('Index.html exists:', require('fs').existsSync(indexPath));
-    res.sendFile(indexPath);
-  });
-}
-```
+### Step 6: Deploy
 
-#### D. Enhanced Startup Logging (Replace the final app.listen section)
-Replace the existing `app.listen` with:
-
-```javascript
-const HOST = '0.0.0.0';
-
-app.listen(PORT, HOST, () => {
-  console.log(`🚀 Server running on ${HOST}:${PORT}`);
-  console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
-  console.log(`📁 Working Directory: ${__dirname}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-  console.log(`📊 Supabase URL: ${supabaseUrl ? 'Configured' : 'Missing'}`);
-});
-```
+1. **Click "Create Web Service"**
+2. **Wait for deployment** (usually 2-5 minutes)
+3. **Check logs** for successful startup messages
 
 ---
 
-### 2. **package.json** - Start Script Fix
+## ✅ Verification Steps
 
-#### Location: Root directory (`./package.json`)
+### 1. Check Deployment Logs
 
-**Change to make:**
+Look for these success messages:
+```
+✅ Render Server running on 0.0.0.0:10000
+🎯 Server started successfully with Node.js v20.17.0!
+🏥 Health Check: http://0.0.0.0:10000/api/health
+```
 
-In the `scripts` section, update the start command:
+### 2. Test API Endpoints
 
+Once deployed, test these URLs (replace with your actual service URL):
+
+```bash
+# Health Check
+https://invoice-ai-backend.onrender.com/api/health
+
+# Test Endpoint
+https://invoice-ai-backend.onrender.com/api/test
+
+# Root Endpoint
+https://invoice-ai-backend.onrender.com/
+```
+
+### 3. Expected Responses
+
+**Health Check Response:**
 ```json
 {
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "start": "NODE_ENV=production node server.js"
-  }
+  "status": "healthy",
+  "timestamp": "2025-01-27T12:00:00.000Z",
+  "version": "1.0.0",
+  "platform": "Render",
+  "environment": "production"
 }
 ```
 
-**What changed:** Added `NODE_ENV=production` before `node server.js`
-
 ---
 
-### 3. **src/App.tsx** - Refresh Token Error Handling
+## 🔧 Configuration Files
 
-#### Location: `./src/App.tsx`
+### render.yaml
+```yaml
+services:
+  - type: web
+    name: invoice-ai-backend
+    env: node
+    plan: free
+    buildCommand: npm install --production
+    startCommand: npm start
+    healthCheckPath: /api/health
+```
 
-**Changes to make:**
-
-#### A. Replace the useEffect hook (around lines 10-40)
-Find the existing `useEffect` and replace it with:
-
-```javascript
-useEffect(() => {
-  // Check Supabase configuration
-  if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-    console.error('Supabase environment variables are missing!');
-    setLoading(false);
-    return;
-  }
-  
-  // Get initial session with refresh token error handling
-  const initializeSession = async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        // Handle refresh token errors by clearing invalid session
-        if (error.message.includes('Refresh Token Not Found') || error.message.includes('Invalid Refresh Token')) {
-          await supabase.auth.signOut();
-          setUser(null);
-        } else {
-          console.error('Supabase connection error:', error);
-        }
-      } else {
-        setUser(session?.user ?? null);
-      }
-    } catch (error) {
-      console.error('Failed to connect to Supabase:', error);
-      // Clear any potentially corrupted session data
-      await supabase.auth.signOut();
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  initializeSession();
-
-  // Listen for auth changes
-  const {
-    data: { subscription },
-  } = supabase.auth.onAuthStateChange((event, session) => {
-    setUser(session?.user ?? null);
-    
-    // Handle OAuth success
-    if (event === 'SIGNED_IN' && session?.user) {
-      console.log('User signed in:', session.user.email);
-    }
-    
-    // Handle OAuth errors
-    if (event === 'SIGNED_OUT') {
-      console.log('User signed out');
-    }
-  });
-
-  return () => subscription.unsubscribe();
-}, []);
+### Updated netlify.toml
+```toml
+# API proxy to Render backend
+[[redirects]]
+  from = "/api/*"
+  to = "https://invoice-ai-backend.onrender.com/api/:splat"
+  status = 200
+  force = true
 ```
 
 ---
 
-### 4. **src/contexts/AuthContext.tsx** - Auth Context Error Handling
+## 🚨 Troubleshooting
 
-#### Location: `./src/contexts/AuthContext.tsx`
+### Common Issues
 
-**Changes to make:**
+**1. Build Failures**
+- Check Node.js version in logs (should be 18+)
+- Verify `package.json` has correct dependencies
+- Check build command: `npm install --production`
 
-#### A. Replace the useEffect hook in AuthProvider (around lines 15-45)
-Find the existing `useEffect` and replace it with:
+**2. Health Check Failures**
+- Ensure `/api/health` endpoint is accessible
+- Check server is binding to `0.0.0.0:PORT`
+- Verify environment variables are set
 
-```javascript
-useEffect(() => {
-  // Get initial session with refresh token error handling
-  const initializeSession = async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        // Handle refresh token errors by clearing invalid session
-        if (error.message.includes('Refresh Token Not Found') || error.message.includes('Invalid Refresh Token')) {
-          await supabase.auth.signOut();
-          setUser(null);
-        } else {
-          console.error('Auth context error:', error);
-        }
-      } else {
-        setUser(session?.user ?? null);
-      }
-    } catch (error) {
-      console.error('Failed to initialize auth session:', error);
-      // Clear any potentially corrupted session data
-      await supabase.auth.signOut();
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  initializeSession();
+**3. Environment Variable Issues**
+- Double-check all required variables are set
+- Ensure no typos in variable names
+- Verify Supabase keys are correct
 
-  // Listen for auth changes
-  const {
-    data: { subscription },
-  } = supabase.auth.onAuthStateChange(async (event, session) => {
-    setUser(session?.user ?? null);
-    
-    // Track login history
-    if (event === 'SIGNED_IN' && session?.user) {
-      await supabase.from('login_history').insert({
-        user_id: session.user.id,
-        login_method: session.user.app_metadata.provider || 'email',
-        ip_address: null, // Would need server-side implementation for real IP
-        user_agent: navigator.userAgent
-      });
-    }
-  });
+**4. CORS Issues**
+- Frontend URL should match exactly
+- Check CORS configuration in server.js
+- Verify Netlify redirects are working
 
-  return () => subscription.unsubscribe();
-}, []);
+### Debug Commands
+
+```bash
+# Check if service is responding
+curl https://your-service.onrender.com/api/health
+
+# Check specific endpoint
+curl https://your-service.onrender.com/api/test
 ```
 
 ---
 
-## Implementation Steps
+## 🔄 Auto-Deploy Setup
 
-### Step 1: Backup Your Current Code
+Render automatically deploys when you push to the `main` branch. To trigger a new deployment:
+
 ```bash
 git add .
-git commit -m "Backup before deployment fixes"
-```
-
-### Step 2: Apply Changes
-1. Open each file mentioned above
-2. Make the exact changes as described
-3. Save all files
-
-### Step 3: Test Locally
-```bash
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-
-# Test production server locally
-npm start
-```
-
-### Step 4: Verify Health Check
-Open your browser and go to: `http://localhost:3001/api/health`
-You should see: `{"status":"healthy","timestamp":"...","version":"1.0.0"}`
-
-### Step 5: Deploy to Railway
-```bash
-git add .
-git commit -m "Fix Railway deployment and refresh token errors"
+git commit -m "Update backend"
 git push origin main
 ```
 
 ---
 
-## Expected Results
+## 📊 Monitoring
 
-After implementing these changes:
+### Render Dashboard Features:
+- **Logs**: Real-time application logs
+- **Metrics**: CPU, memory, and request metrics
+- **Events**: Deployment history and events
+- **Settings**: Environment variables and configuration
 
-✅ **Railway Health Check** - Should pass successfully  
-✅ **Server Startup** - Comprehensive logging will show configuration status  
-✅ **Frontend Serving** - React app will load correctly in production  
-✅ **Authentication** - No more refresh token errors  
-✅ **Error Handling** - Graceful handling of invalid sessions  
-
----
-
-## Troubleshooting
-
-### If Health Check Still Fails:
-1. Check Railway logs for the startup messages
-2. Verify all environment variables are set in Railway dashboard
-3. Ensure the build completed successfully
-
-### If Authentication Issues Persist:
-1. Clear browser localStorage and cookies
-2. Check Supabase dashboard for authentication settings
-3. Verify environment variables match your Supabase project
-
-### If Static Files Don't Load:
-1. Verify `npm run build` creates a `dist` folder
-2. Check that `dist/index.html` exists after build
-3. Review server logs for file serving messages
+### Key Metrics to Monitor:
+- **Response Time**: Should be < 1000ms
+- **Error Rate**: Should be < 1%
+- **Memory Usage**: Should stay under 512MB
+- **CPU Usage**: Should stay under 50%
 
 ---
 
-## Environment Variables Checklist
+## 🎯 Next Steps
 
-Ensure these are set in Railway:
-
+1. **Update Frontend**: Make sure Netlify redirects point to your new Render URL
+2. **Test Integration**: Verify frontend can communicate with backend
+3. **Monitor Performance**: Check Render dashboard for any issues
+4. **Set Up Alerts**: Configure notifications for downtime
 
 ---
 
-## Support
+## 📞 Support
 
-If you encounter any issues during implementation:
-1. Check the exact line numbers in your files (they might differ slightly)
-2. Ensure proper indentation and syntax
-3. Test each change incrementally
-4. Review Railway deployment logs for specific error messages
+If you encounter issues:
 
-Good luck with your deployment! 🚀
+1. **Check Render Logs**: Most issues show up in the deployment logs
+2. **Verify Environment Variables**: Ensure all required variables are set
+3. **Test Endpoints**: Use curl or browser to test API directly
+4. **Check Supabase**: Verify database connection and permissions
+
+**Render Documentation**: [render.com/docs](https://render.com/docs)
+
+---
+
+Good luck with your Render deployment! 🚀
