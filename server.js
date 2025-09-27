@@ -14,13 +14,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 console.log('🚀 Starting Invoice AI Platform Server...');
 console.log('📁 Working Directory:', __dirname);
 console.log('🌍 Environment:', process.env.NODE_ENV);
 console.log('🔧 Node.js Version:', process.version);
-console.log('🚪 Port:', PORT);
+console.log('🚪 Port:', PORT, '(Railway assigned)');
+console.log('🌐 Railway Region:', process.env.RAILWAY_REGION || 'unknown');
+console.log('🔧 Railway Service:', process.env.RAILWAY_SERVICE_NAME || 'unknown');
 
 // Environment variables check
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -98,6 +100,11 @@ app.get('/api/health', (req, res) => {
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
     port: PORT,
+    railway: {
+      service: process.env.RAILWAY_SERVICE_NAME || 'unknown',
+      region: process.env.RAILWAY_REGION || 'unknown',
+      builder: 'RAILPACK'
+    },
     server: {
       uptime: Math.floor(process.uptime()),
       memory: process.memoryUsage(),
@@ -289,18 +296,20 @@ app.use((error, req, res, next) => {
 });
 
 // Start server
-const HOST = '0.0.0.0';
+const HOST = process.env.HOST || '0.0.0.0';
 
 console.log('🚀 Starting server...');
 
 const server = app.listen(PORT, HOST, () => {
-  console.log(`🚀 Server running on ${HOST}:${PORT}`);
+  console.log(`🚀 Server running on ${HOST}:${PORT} (Railway RAILPACK)`);
   console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
   console.log(`🧪 Test Endpoint: http://${HOST}:${PORT}/api/test`);
   console.log(`📚 API Docs: http://${HOST}:${PORT}/api-docs`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔧 Node.js Version: ${process.version}`);
   console.log(`📊 Supabase: ${supabase ? '✅ Connected' : '⚠️ Not configured'}`);
+  console.log(`🚂 Railway Service: ${process.env.RAILWAY_SERVICE_NAME || 'unknown'}`);
+  console.log(`🌐 Railway Region: ${process.env.RAILWAY_REGION || 'unknown'}`);
   console.log('✅ Server startup complete!');
 });
 
