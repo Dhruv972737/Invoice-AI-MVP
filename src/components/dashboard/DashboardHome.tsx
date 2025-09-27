@@ -7,7 +7,8 @@ import {
   Calendar,
   Eye,
   Download,
-  X
+  X,
+  MessageSquare
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -143,7 +144,7 @@ export default function DashboardHome({ setActiveView }: DashboardHomeProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
@@ -557,6 +558,20 @@ export default function DashboardHome({ setActiveView }: DashboardHomeProps) {
           </div>
         </div>
       </div>
+
+      {/* Floating Chatbot Button */}
+      <button
+        onClick={() => setActiveView('chat')}
+        className="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
+        title="Ask AI Assistant"
+      >
+        <MessageSquare className="w-6 h-6" />
+        <div className="absolute -top-2 -left-2 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+        <div className="absolute right-full mr-3 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+          Ask AI Assistant
+          <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-gray-900"></div>
+        </div>
+      </button>
     </div>
   );
 }
