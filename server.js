@@ -1,6 +1,12 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 10000; // Render uses port 10000 by default
@@ -151,7 +157,7 @@ if (process.env.NODE_ENV === 'production') {
   
   // Check if dist directory exists
   try {
-    const fs = require('fs');
+    const fs = await import('fs');
     if (fs.existsSync(distPath)) {
       console.log('📂 Serving static files from dist directory');
       app.use(express.static(distPath));
