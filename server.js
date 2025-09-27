@@ -14,13 +14,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 console.log('🚀 Starting Invoice AI Platform Server...');
 console.log('📁 Working Directory:', __dirname);
 console.log('🌍 Environment:', process.env.NODE_ENV);
 console.log('🔧 Node.js Version:', process.version);
-console.log('🚪 Port:', PORT, '(Railway assigned)');
+console.log('🚪 Port:', PORT, process.env.PORT ? '(Railway assigned)' : '(default fallback)');
 console.log('🌐 Railway Region:', process.env.RAILWAY_REGION || 'unknown');
 console.log('🔧 Railway Service:', process.env.RAILWAY_SERVICE_NAME || 'unknown');
 
@@ -301,7 +301,7 @@ const HOST = process.env.HOST || '0.0.0.0';
 console.log('🚀 Starting server...');
 
 const server = app.listen(PORT, HOST, () => {
-  console.log(`🚀 Server running on ${HOST}:${PORT} (Railway RAILPACK)`);
+  console.log(`🚀 Server running on ${HOST}:${PORT} (Railway RAILPACK - Port ${process.env.PORT ? 'assigned by Railway' : 'using fallback'})`);
   console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
   console.log(`🧪 Test Endpoint: http://${HOST}:${PORT}/api/test`);
   console.log(`📚 API Docs: http://${HOST}:${PORT}/api-docs`);
@@ -310,6 +310,7 @@ const server = app.listen(PORT, HOST, () => {
   console.log(`📊 Supabase: ${supabase ? '✅ Connected' : '⚠️ Not configured'}`);
   console.log(`🚂 Railway Service: ${process.env.RAILWAY_SERVICE_NAME || 'unknown'}`);
   console.log(`🌐 Railway Region: ${process.env.RAILWAY_REGION || 'unknown'}`);
+  console.log(`🔌 Railway Port: ${process.env.PORT || 'Not set - using fallback'}`);
   console.log('✅ Server startup complete!');
 });
 
