@@ -2,12 +2,29 @@ import express from 'express';
 import cors from 'cors';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
+const HOST = '0.0.0.0'; // Critical for Railway!
 
 console.log('🚀 Starting ES Module server...');
 console.log('📍 Port:', PORT);
 console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
 console.log('🚂 Railway PORT:', process.env.PORT || 'NOT SET');
+
+// Validate environment variables
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+console.log('🔍 Environment Variables Check:');
+console.log('SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
+console.log('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'Set' : 'Missing');
+
+if (!supabaseUrl) {
+  console.warn('⚠️ SUPABASE_URL not found - some features may not work');
+}
+
+if (!supabaseServiceKey) {
+  console.warn('⚠️ SUPABASE_SERVICE_ROLE_KEY not found - some features may not work');
+}
 
 // Basic middleware
 app.use(cors({
@@ -21,7 +38,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log(`📝 ${req.method} ${req.path} - ${req.ip}`);
+  console.log(`📝 ${req.method} ${req.path} - ${req.ip} - ${req.get('User-Agent')?.substring(0, 50) || 'Unknown'}`);
   next();
 });
 
@@ -35,20 +52,27 @@ app.get('/', (req, res) => {
     port: PORT,
     railway_port: process.env.PORT,
     environment: process.env.NODE_ENV || 'development',
-    node_version: process.version
+    node_version: process.version,
+    host: HOST,
+    supabase_configured: !!supabaseUrl,
+    service_key_configured: !!supabaseServiceKey
   });
 });
 
-// Health check endpoint
+// Health check endpoint for Railway
 app.get('/api/health', (req, res) => {
   console.log('🏥 Health check requested');
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
     port: PORT,
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    version: '1.0.0'
+    railway_port: process.env.PORT,
+    supabase_url: supabaseUrl ? 'configured' : 'missing',
+    service_key: supabaseServiceKey ? 'configured' : 'missing'
   });
 });
 
@@ -59,8 +83,18 @@ app.get('/api/test', (req, res) => {
     message: 'API is working perfectly!',
     timestamp: new Date().toISOString(),
     method: req.method,
-    headers: req.headers,
-    query: req.query
+    headers: {
+      'user-agent': req.get('User-Agent'),
+      'host': req.get('Host'),
+      'x-forwarded-for': req.get('X-Forwarded-For')
+    },
+    query: req.query,
+    railway_info: {
+      port: process.env.PORT,
+      environment: process.env.RAILWAY_ENVIRONMENT,
+      service: process.env.RAILWAY_SERVICE_NAME,
+      deployment: process.env.RAILWAY_DEPLOYMENT_ID
+    }
   });
 });
 
@@ -75,7 +109,8 @@ app.get('/api', (req, res) => {
       test: '/api/test',
       root: '/'
     },
-    status: 'operational'
+    status: 'operational',
+    railway_configured: !!process.env.PORT
   });
 });
 
@@ -86,7 +121,13 @@ app.use('*', (req, res) => {
     error: 'Route not found',
     path: req.originalUrl,
     method: req.method,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    available_endpoints: [
+      '/',
+      '/api/health',
+      '/api/test',
+      '/api'
+    ]
   });
 });
 
@@ -103,17 +144,23 @@ app.use((err, req, res, next) => {
 // Start server with better error handling
 const startServer = () => {
   try {
-    const server = app.listen(PORT, '0.0.0.0', () => {
-      console.log(`✅ ES Module Server running on 0.0.0.0:${PORT}`);
+    const server = app.listen(PORT, HOST, () => {
+      console.log(`✅ ES Module Server running on ${HOST}:${PORT}`);
       console.log(`🌐 Railway assigned port: ${process.env.PORT || 'NOT ASSIGNED'}`);
       console.log(`🎯 Server started successfully with Node.js ${process.version}!`);
-      console.log(`🔗 Health check: http://0.0.0.0:${PORT}/api/health`);
+      console.log(`🏥 Health Check: http://${HOST}:${PORT}/api/health`);
+      console.log(`📁 Working Directory: ${process.cwd()}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🚂 Railway Service: ${process.env.RAILWAY_SERVICE_NAME || 'Unknown'}`);
+      console.log(`🌎 Railway Environment: ${process.env.RAILWAY_ENVIRONMENT || 'Unknown'}`);
     });
 
     server.on('error', (err) => {
       console.error('❌ Server startup error:', err);
       if (err.code === 'EADDRINUSE') {
         console.error(`❌ Port ${PORT} is already in use`);
+      } else if (err.code === 'EACCES') {
+        console.error(`❌ Permission denied to bind to port ${PORT}`);
       }
       process.exit(1);
     });
