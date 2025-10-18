@@ -1,0 +1,9 @@
+fastapi==0.100.0
+uvicorn[standard]==0.22.0
+# stripe is optional for local runs; install separately if needed
+python-dotenv==1.0.0
+supabase==2.3.0
+# pin httpx to a 0.24.x release compatible with supabase/gotrue/postgrest/storage3
+httpx==0.24.1
+pydantic==2.6.0
+google-auth==2.22.0
