@@ -1,4 +1,13 @@
-# Dependencies
+# Google Cloud credentials - NEVER COMMIT THESE!
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!vite.config.json
+*.pem
+*.key
+*credentials*.json
+*service-account*.json# Dependencies
 node_modules/
 .pnp
 .pnp.js
