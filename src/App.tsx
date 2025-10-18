@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { TokenProvider } from './contexts/TokenContext'; // NEW
+import { LanguageProvider } from './contexts/LanguageContext';
 import AuthPage from './components/auth/AuthPage';
 import Dashboard from './components/Dashboard';
 import LoadingSpinner from './components/ui/LoadingSpinner';
@@ -61,15 +62,17 @@ function App() {
 
   return (
     <AuthProvider>
-      <ThemeProvider>
-        <ToastProvider>
-          <TokenProvider> {/* NEW: Wrap with TokenProvider */}
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-              {user ? <Dashboard /> : <AuthPage />}
-            </div>
-          </TokenProvider>
-        </ToastProvider>
-      </ThemeProvider>
+      <LanguageProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <TokenProvider> {/* NEW: Wrap with TokenProvider */}
+              <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+                {user ? <Dashboard /> : <AuthPage />}
+              </div>
+            </TokenProvider>
+          </ToastProvider>
+        </ThemeProvider>
+      </LanguageProvider>
     </AuthProvider>
   );
 }

@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { FileText, Brain, User } from 'lucide-react';
 import { signInWithGoogle } from '../../lib/supabase';
 import { useToast } from '../../contexts/ToastContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
+  const { t } = useLanguage();
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -35,10 +37,10 @@ export default function AuthPage() {
               <div className="p-2 bg-white/20 rounded-lg">
                 <FileText className="w-8 h-8" />
               </div>
-              <h1 className="text-3xl font-bold">InvoiceAI</h1>
+              <h1 className="text-3xl font-bold">{t('auth.title')}</h1>
             </div>
             <p className="text-xl text-blue-100 mb-8">
-              Transform your invoice processing with AI-powered automation
+              {t('auth.subtitle')}
             </p>
           </div>
 
@@ -48,33 +50,33 @@ export default function AuthPage() {
                 <Brain className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-semibold mb-2">AI-Powered Processing</h3>
+                <h3 className="font-semibold mb-2">{t('auth.feature1.title')}</h3>
                 <p className="text-blue-100 text-sm">
-                  Automatic OCR, field extraction, and fraud detection using advanced AI
+                  {t('auth.feature1.desc')}
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-start space-x-4">
               <div className="p-2 bg-white/20 rounded-lg">
                 <FileText className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Smart Analytics</h3>
+                <h3 className="font-semibold mb-2">{t('auth.feature2.title')}</h3>
                 <p className="text-blue-100 text-sm">
-                  Real-time dashboard with insights, tax compliance, and export features
+                  {t('auth.feature2.desc')}
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-start space-x-4">
               <div className="p-2 bg-white/20 rounded-lg">
                 <User className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Secure & Compliant</h3>
+                <h3 className="font-semibold mb-2">{t('auth.feature3.title')}</h3>
                 <p className="text-blue-100 text-sm">
-                  Enterprise-grade security with multi-region tax compliance
+                  {t('auth.feature3.desc')}
                 </p>
               </div>
             </div>
@@ -90,17 +92,17 @@ export default function AuthPage() {
               <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
                 <FileText className="w-8 h-8 text-blue-600 dark:text-blue-400" />
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">InvoiceAI</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('auth.title')}</h1>
             </div>
           </div>
 
           <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
             <div className="mb-8 text-center">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Sign in with Google
+                {t('auth.signInTitle')}
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                Use your Google account to access InvoiceAI
+                {t('auth.signInSubtitle')}
               </p>
             </div>
 
@@ -111,7 +113,7 @@ export default function AuthPage() {
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                    Continue with
+                    {t('auth.continueWith')}
                   </span>
                 </div>
               </div>
@@ -127,7 +129,7 @@ export default function AuthPage() {
                   <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                   <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
-                <span>Continue with Google</span>
+                <span>{t('auth.googleSignIn')}</span>
                 {loading && <LoadingSpinner size="sm" />}
               </button>
             </div>

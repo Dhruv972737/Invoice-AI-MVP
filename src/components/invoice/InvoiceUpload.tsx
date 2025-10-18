@@ -4,6 +4,7 @@ import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { EnhancedOCRService } from '../../lib/ai/enhancedOCRService';
 import { useEnhancedOCRProcessing } from '../../lib/ai/ocrIntegration';
 import { GeminiService } from '../../lib/ai/geminiService';
@@ -230,6 +231,7 @@ interface InvoiceUploadProps {
 export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { t } = useLanguage();
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const { processFileWithEnhancedOCR, ocrProgress } = useEnhancedOCRProcessing();
@@ -568,10 +570,10 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Upload Invoices
+          {t('upload.title')}
         </h2>
         <p className="text-gray-600 dark:text-gray-400">
-          Upload PDF or image files of your invoices for AI processing
+          {t('upload.subtitle')}
         </p>
       </div>
 
@@ -589,10 +591,10 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
       >
         <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-          Drop files here or click to upload
+          {t('upload.dropzone')}
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          Supports PDF, JPEG, PNG files up to 10MB each
+          {t('upload.formats')}
         </p>
         
         <input
@@ -605,7 +607,7 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
         
         <button className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
           <Upload className="w-4 h-4 mr-2" />
-          Choose Files
+          {t('upload.chooseFiles')}
         </button>
 
         <div className="mt-4 flex items-center justify-center space-x-6 text-xs text-gray-500 dark:text-gray-400">
@@ -624,7 +626,7 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Processing Files ({uploadedFiles.length})
+              {t('upload.processing')} ({uploadedFiles.length})
             </h3>
           </div>
           
@@ -653,7 +655,7 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
                   <div className="flex items-center space-x-2">
                     {getStatusIcon(uploadFile.status)}
                     <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">
-                      {uploadFile.status}
+                      {t(`upload.status.${uploadFile.status}`)}
                     </span>
                   </div>
 
@@ -687,7 +689,7 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
                 onClick={onUploadComplete}
                 className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
               >
-                View Processed Invoices
+                {t('upload.viewProcessed')}
               </button>
             </div>
           )}
@@ -697,10 +699,10 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
       <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
-            Enhanced AI Processing Pipeline
+            {t('upload.aiPipeline')}
           </h3>
           <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-2 py-1 rounded-full">
-            95%+ Accuracy
+            {t('upload.accuracy')}
           </span>
         </div>
         {!geminiApiKey && (
@@ -713,38 +715,38 @@ export default function InvoiceUpload({ onUploadComplete }: InvoiceUploadProps) 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span className="text-blue-800 dark:text-blue-200">Enhanced Tesseract OCR</span>
+            <span className="text-blue-800 dark:text-blue-200">{t('upload.feature1')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span className="text-blue-800 dark:text-blue-200">Image Preprocessing</span>
+            <span className="text-blue-800 dark:text-blue-200">{t('upload.feature2')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span className="text-blue-800 dark:text-blue-200">Multi-Language Support</span>
+            <span className="text-blue-800 dark:text-blue-200">{t('upload.feature3')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span className="text-blue-800 dark:text-blue-200">Quality Validation</span>
+            <span className="text-blue-800 dark:text-blue-200">{t('upload.feature4')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span className="text-blue-800 dark:text-blue-200">Advanced Fraud Detection</span>
+            <span className="text-blue-800 dark:text-blue-200">{t('upload.feature5')}</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span className="text-blue-800 dark:text-blue-200">Performance Analytics</span>
+            <span className="text-blue-800 dark:text-blue-200">{t('upload.feature6')}</span>
           </div>
         </div>
-        
+
         <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-700">
-          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">New Enhancements:</h4>
+          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">{t('upload.enhancements')}</h4>
           <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-            <li>• 3x higher resolution PDF processing</li>
-            <li>• Adaptive contrast enhancement</li>
-            <li>• Multi-language OCR support</li>
-            <li>• Real-time quality assessment</li>
-            <li>• Intelligent preprocessing pipeline</li>
+            <li>• {t('upload.enhancement1')}</li>
+            <li>• {t('upload.enhancement2')}</li>
+            <li>• {t('upload.enhancement3')}</li>
+            <li>• {t('upload.enhancement4')}</li>
+            <li>• {t('upload.enhancement5')}</li>
           </ul>
         </div>
       </div>

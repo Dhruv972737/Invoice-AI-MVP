@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { TokenDisplay } from '../contexts/TokenContext'; // NEW
+import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
 import InvoiceUpload from './invoice/InvoiceUpload';
 import InvoiceList from './invoice/InvoiceList';
@@ -20,6 +21,7 @@ import {
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('overview');
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -39,12 +41,12 @@ export default function Dashboard() {
   }, [user]);
 
   const navigation = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'upload', label: 'Upload Invoice', icon: Upload },
-    { id: 'chat', label: 'AI Assistant', icon: MessageSquare },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'settings', label: 'Settings', icon: SettingsIcon },
-    ...(isAdmin ? [{ id: 'admin', label: 'Admin', icon: Shield }] : [])
+    { id: 'overview', label: t('nav.overview'), icon: LayoutDashboard },
+    { id: 'upload', label: t('nav.upload'), icon: Upload },
+    { id: 'chat', label: t('nav.chat'), icon: MessageSquare },
+    { id: 'analytics', label: t('nav.analytics'), icon: BarChart3 },
+    { id: 'settings', label: t('nav.settings'), icon: SettingsIcon },
+    ...(isAdmin ? [{ id: 'admin', label: t('nav.admin'), icon: Shield }] : [])
   ];
 
   return (
@@ -53,7 +55,7 @@ export default function Dashboard() {
       <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
         <div className="p-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Invoice AI
+            {t('dashboard.title')}
           </h1>
         </div>
 
@@ -88,7 +90,7 @@ export default function Dashboard() {
             className="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
           >
             <LogOut className="w-5 h-5" />
-            <span className="font-medium">Sign Out</span>
+            <span className="font-medium">{t('common.signOut')}</span>
           </button>
         </div>
       </aside>
@@ -107,10 +109,12 @@ export default function Dashboard() {
 }
 
 function OverviewTab() {
+  const { t } = useLanguage();
+
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Dashboard Overview
+        {t('dashboard.overview')}
       </h2>
       <InvoiceList />
     </div>

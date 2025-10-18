@@ -1,7 +1,8 @@
 import React from 'react';
-import { Menu, Bell, Sun, Moon, User, LogOut } from 'lucide-react';
+import { Menu, Bell, Sun, Moon, User, LogOut, Languages } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { signOut } from '../../lib/supabase';
 
 interface HeaderProps {
@@ -11,11 +12,21 @@ interface HeaderProps {
 export default function Header({ setSidebarOpen }: HeaderProps) {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
+  const [showLanguageMenu, setShowLanguageMenu] = React.useState(false);
 
   const handleSignOut = async () => {
     await signOut();
   };
+
+  const languages = [
+    { code: 'en' as const, name: 'English', flag: '🇬🇧' },
+    { code: 'ar' as const, name: 'العربية', flag: '🇸🇦' },
+    { code: 'de' as const, name: 'Deutsch', flag: '🇩🇪' },
+  ];
+
+  const currentLanguage = languages.find(lang => lang.code === language);
 
   return (
     <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -30,12 +41,46 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
           
           <div className="hidden lg:block">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-              Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+              {t('common.welcome')}, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
             </h2>
           </div>
         </div>
 
         <div className="flex items-center space-x-4">
+          {/* Language Selector */}
+          <div className="relative">
+            <button
+              onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+              title={t('common.language')}
+            >
+              <Languages className="w-5 h-5" />
+              <span className="text-sm font-medium hidden md:inline">{currentLanguage?.flag}</span>
+            </button>
+
+            {showLanguageMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                {languages.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => {
+                      setLanguage(lang.code);
+                      setShowLanguageMenu(false);
+                    }}
+                    className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                      language === lang.code
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                        : 'text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    <span className="mr-3 text-lg">{lang.flag}</span>
+                    <span>{lang.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -77,7 +122,7 @@ export default function Header({ setSidebarOpen }: HeaderProps) {
                   className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <LogOut className="w-4 h-4 mr-3" />
-                  Sign out
+                  {t('common.signOut')}
                 </button>
               </div>
             )}
