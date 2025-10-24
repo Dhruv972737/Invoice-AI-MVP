@@ -71,13 +71,27 @@ app = FastAPI(title='Invoice AI FastAPI Backend')
 # In production, use Redis or database
 oauth_state_cache = {}
 
+# Configure CORS origins
+cors_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+]
+
+# Add production frontend URL if set
+if FRONTEND_URL and FRONTEND_URL not in cors_origins:
+    cors_origins.append(FRONTEND_URL)
+    # Also add both http and https versions
+    if FRONTEND_URL.startswith('http://'):
+        cors_origins.append(FRONTEND_URL.replace('http://', 'https://'))
+    elif FRONTEND_URL.startswith('https://'):
+        cors_origins.append(FRONTEND_URL.replace('https://', 'http://'))
+
+logger.info(f"CORS origins configured: {cors_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        FRONTEND_URL,  # Uses the env variable you already have
-    ],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
