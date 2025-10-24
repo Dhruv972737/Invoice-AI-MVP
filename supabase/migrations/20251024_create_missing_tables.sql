@@ -54,7 +54,7 @@ CREATE POLICY "Users can delete own login history"
 CREATE TABLE IF NOT EXISTS public.agent_execution_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    invoice_id UUID REFERENCES public.invoices(id) ON DELETE SET NULL,
+    invoice_id UUID, -- Will add foreign key constraint separately if invoices table exists
     agent_name TEXT NOT NULL, -- 'DataExtractor', 'Validator', 'Categorizer', etc.
     status TEXT NOT NULL CHECK (status IN ('started', 'completed', 'failed')),
     execution_time_ms INTEGER DEFAULT 0,
@@ -63,6 +63,22 @@ CREATE TABLE IF NOT EXISTS public.agent_execution_logs (
     error_message TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Add foreign key constraint to invoices table if it exists
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'invoices'
+    ) THEN
+        ALTER TABLE public.agent_execution_logs
+        ADD CONSTRAINT fk_agent_logs_invoice
+        FOREIGN KEY (invoice_id)
+        REFERENCES public.invoices(id)
+        ON DELETE SET NULL;
+    END IF;
+END $$;
 
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_agent_logs_user_id ON public.agent_execution_logs(user_id);
