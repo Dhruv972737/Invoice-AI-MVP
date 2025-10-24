@@ -1,0 +1,10 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = true
+	ignorecase = true
+	precomposeunicode = true
+[remote "origin"]
+	url = https://github.com/Dhruv972737/Invoice-AI-MVP.git
+	fetch = +refs/*:refs/*
+	mirror = true

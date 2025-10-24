@@ -1,0 +1,11 @@
+# Sample Invoice Files
+
+This directory will contain sample invoice files for testing.
+Add your test invoice files here:
+
+- sample-invoice-1.pdf
+- sample-invoice-2.pdf  
+- sample-receipt.jpg
+- invoice-scan.png
+
+Note: Actual sample files should be added manually to avoid including large binary files in the repository.

@@ -1,0 +1,77 @@
+# Google Cloud credentials - NEVER COMMIT THESE!
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!vite.config.json
+*.pem
+*.key
+*credentials*.json
+*service-account*.json# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Testing
+coverage/
+*.coverage
+.nyc_output
+
+# Production builds
+dist/
+build/
+*.egg-info/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Startup scripts with hardcoded credentials - NEVER COMMIT!
+backend/fastapi/start_backend_properly.sh
+backend/fastapi/run_backend.sh
+start_backend.sh
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+*.tmp
+.cache/
+.parcel-cache/
+
+# Database
+*.sqlite
+*.db
+
+# Large files (add specific ones you find)
+*.zip
+*.tar.gz
+*.rar

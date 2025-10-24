@@ -1,0 +1,47 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-dotenv==1.0.0
+supabase==2.9.0
+httpx==0.27.0
+pydantic==2.12.3
+google-auth==2.22.0
+PyJWT==2.8.0
+
+# Payment integrations
+stripe==7.0.0
+paypalrestsdk==1.13.1
+
+# Google integrations
+google-api-python-client==2.108.0
+google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.0
+
+# Background jobs and async
+redis==5.0.1
+celery==5.3.4
+
+# PDF and export
+reportlab==4.0.7
+openpyxl==3.1.2
+pandas==2.1.3
+
+# ML and fraud detection
+scikit-learn==1.3.2
+numpy==1.26.2
+
+# Email processing
+email-validator==2.1.0
+
+# Monitoring and metrics
+prometheus-client==0.19.0
+
+# Rate limiting
+slowapi==0.1.9
+
+# OCR and AI
+google-generativeai==0.3.2
+pytesseract==0.3.10
+Pillow==10.1.0
+pdf2image==1.16.3
+PyPDF2==3.0.1
+websockets==15.0.1
