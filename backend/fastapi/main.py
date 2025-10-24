@@ -37,7 +37,7 @@ SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+FRONTEND_URL = os.environ.get('FRONTEND_URL', '')
 PORT = int(os.environ.get('PORT', '10000'))
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 
@@ -76,9 +76,12 @@ cors_origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
+    # Production frontend URLs
+    "https://invoice-ai-frontend.netlify.app",
+    "http://invoice-ai-frontend.netlify.app",
 ]
 
-# Add production frontend URL if set
+# Add additional production frontend URL from environment variable if set
 if FRONTEND_URL and FRONTEND_URL not in cors_origins:
     cors_origins.append(FRONTEND_URL)
     # Also add both http and https versions
