@@ -1,4 +1,4 @@
-# Invoice AI MVP
+# Invoice AI MVP.
 
 AI-powered invoice processing platform with OCR extraction, fraud detection, and intelligent chatbot assistance.
 
