@@ -382,7 +382,7 @@ const de = {
   'tokens.purchase.subtitle': 'Kaufen Sie Token-Pakete, um mehr Rechnungen zu verarbeiten',
   'tokens.purchase.tokens': 'Tokens',
   'tokens.purchase.popular': 'Beliebt',
-  'tokens.purchase.button': '{count} Tokens kaufen',
+  'tokens.purchase.button': '{{count}} Tokens kaufen',
   'tokens.purchase.processing': 'Zahlung wird verarbeitet...',
 
   // Subscription Plans

@@ -382,7 +382,7 @@ const ar = {
   'tokens.purchase.subtitle': 'اشتر حزم الرموز لمعالجة المزيد من الفواتير',
   'tokens.purchase.tokens': 'رموز',
   'tokens.purchase.popular': 'شائع',
-  'tokens.purchase.button': 'شراء {count} رموز',
+  'tokens.purchase.button': 'شراء {{count}} رموز',
   'tokens.purchase.processing': 'جاري معالجة الدفع...',
 
   // Subscription Plans

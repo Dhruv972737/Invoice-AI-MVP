@@ -456,7 +456,7 @@ export function TokenPurchase() {
     if (!user) return;
 
     try {
-      const backend = import.meta.env.VITE_BACKEND_URL || '';
+      const backend = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/+$/, '');
       const resp = await fetch(`${backend}/api/payments/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

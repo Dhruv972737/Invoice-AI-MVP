@@ -382,7 +382,7 @@ const en = {
   'tokens.purchase.subtitle': 'Buy token packages to process more invoices',
   'tokens.purchase.tokens': 'tokens',
   'tokens.purchase.popular': 'Popular',
-  'tokens.purchase.button': 'Purchase {count} Tokens',
+  'tokens.purchase.button': 'Purchase {{count}} Tokens',
   'tokens.purchase.processing': 'Processing payment...',
 
   // Subscription Plans
