@@ -22,9 +22,13 @@ class DriveIntegrationService:
     """
 
     # Scopes required for Drive API
+    # Using drive.file (non-sensitive) instead of drive.readonly (sensitive)
+    # This allows access to files created/opened by this app without Google verification
     SCOPES = [
-        'https://www.googleapis.com/auth/drive.readonly',
-        'https://www.googleapis.com/auth/drive.metadata.readonly'
+        'https://www.googleapis.com/auth/drive.file',
+        'openid',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile'
     ]
 
     # Supported MIME types for invoice files
